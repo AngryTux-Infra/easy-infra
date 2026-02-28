@@ -1,0 +1,72 @@
+[
+  {
+    "name": "type:prd",
+    "color": "0052CC",
+    "description": "Product Requirements Document (RF/RNF) — only editable manually"
+  },
+  {
+    "name": "type:adr",
+    "color": "5319E7",
+    "description": "Architecture Decision Record"
+  },
+  {
+    "name": "type:task",
+    "color": "1D76DB",
+    "description": "Implementation work"
+  },
+  {
+    "name": "type:bug",
+    "color": "D73A4A",
+    "description": "Something is broken"
+  },
+  {
+    "name": "status:draft",
+    "color": "E4E669",
+    "description": "Being written, incomplete"
+  },
+  {
+    "name": "status:ready",
+    "color": "0E8A16",
+    "description": "Ready to be picked up"
+  },
+  {
+    "name": "status:in-progress",
+    "color": "FBCA04",
+    "description": "Someone is working on this"
+  },
+  {
+    "name": "status:review",
+    "color": "D93F0B",
+    "description": "Work done, needs review"
+  },
+  {
+    "name": "P0",
+    "color": "B60205",
+    "description": "Critical — blocks usage or causes access loss"
+  },
+  {
+    "name": "P1",
+    "color": "D93F0B",
+    "description": "Next action — affects core functionality"
+  },
+  {
+    "name": "P2",
+    "color": "FBCA04",
+    "description": "Planned — no urgency"
+  },
+  {
+    "name": "P3",
+    "color": "C5DEF5",
+    "description": "Nice to have"
+  },
+  {
+    "name": "blocked",
+    "color": "B60205",
+    "description": "Dependency not resolved"
+  },
+  {
+    "name": "needs-input",
+    "color": "D876E3",
+    "description": "Missing information to proceed"
+  }
+]

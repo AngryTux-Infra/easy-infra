@@ -1,0 +1,131 @@
+# /etc/ssh/sshd_config — Gerado pelo easy-infra (02-ssh-hardening.sh)
+# NÃO edite manualmente. Use o template em configs/sshd_config do repositório.
+#
+# ADR #3 — Estratégia de hardening SSH (hardening agressivo)
+
+# ==============================================================================
+# Rede e porta
+# ==============================================================================
+
+# Porta configurável via variável SSH_PORT (padrão: 2222)
+Port {{SSH_PORT}}
+
+# Aceita conexões em todas as interfaces; ajuste para o IP específico se desejado
+#ListenAddress 0.0.0.0
+
+# Versão do protocolo — apenas SSHv2
+Protocol 2
+
+# ==============================================================================
+# Autenticação
+# ==============================================================================
+
+# Desabilita login direto do root
+PermitRootLogin no
+
+# Desabilita autenticação por senha — apenas chave pública é aceita
+PasswordAuthentication no
+
+# Desabilita autenticação por teclado interativo (PAM challenge-response)
+ChallengeResponseAuthentication no
+
+# Desabilita autenticação por senha via PAM
+KbdInteractiveAuthentication no
+
+# Número máximo de tentativas de autenticação por conexão
+MaxAuthTries 3
+
+# Número máximo de sessões simultâneas abertas por conexão
+MaxSessions 5
+
+# Desabilita autenticação por host (rhosts / .shosts)
+IgnoreRhosts yes
+HostbasedAuthentication no
+
+# Não permitir senhas vazias
+PermitEmptyPasswords no
+
+# Tempo máximo para completar a autenticação (segundos)
+LoginGraceTime 30
+
+# ==============================================================================
+# Chaves e criptografia
+# ==============================================================================
+
+# Arquivos de chave do host
+HostKey /etc/ssh/ssh_host_ed25519_key
+HostKey /etc/ssh/ssh_host_rsa_key
+
+# Algoritmos de chave pública aceitos (apenas modernos)
+PubkeyAcceptedAlgorithms ssh-ed25519,rsa-sha2-512,rsa-sha2-256
+
+# Troca de chaves — apenas algoritmos seguros
+KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512
+
+# Cifradores simétricos
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com
+
+# Algoritmos de integridade (MACs)
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+
+# ==============================================================================
+# Sessão e keepalive
+# ==============================================================================
+
+# Envia mensagem de keepalive a cada 180 segundos de inatividade
+ClientAliveInterval 180
+
+# Encerra a conexão após 2 keepalives sem resposta (180s × 2 = 6 minutos)
+ClientAliveCountMax 2
+
+# Desabilita compressão (reduz superfície de ataque)
+Compression no
+
+# ==============================================================================
+# Restrições de funcionalidade
+# ==============================================================================
+
+# Desabilita forwarding X11
+X11Forwarding no
+
+# Desabilita forwarding TCP genérico (tunneling)
+AllowTcpForwarding no
+
+# Desabilita forwarding de agente SSH
+AllowAgentForwarding no
+
+# Desabilita túneis TUN/TAP
+PermitTunnel no
+
+# Proíbe o cliente de definir variáveis de ambiente
+PermitUserEnvironment no
+
+# Desabilita SFTP embutido — remova se precisar de SFTP
+#Subsystem sftp /usr/lib/openssh/sftp-server
+
+# ==============================================================================
+# Logging e auditoria
+# ==============================================================================
+
+# Nível de log (INFO é suficiente para auditoria; use VERBOSE se quiser mais)
+LogLevel INFO
+
+# Facilidade syslog
+SyslogFacility AUTH
+
+# Habilita rastreamento de sessão PAM (necessário para algumas distros)
+UsePAM yes
+
+# ==============================================================================
+# Banner legal
+# ==============================================================================
+
+# Exibe banner antes da autenticação
+Banner /etc/ssh/banner
+
+# ==============================================================================
+# Subsistemas
+# ==============================================================================
+
+# SFTP — habilitado com chroot opcional; comente se não for usar SFTP
+Subsystem sftp /usr/lib/openssh/sftp-server

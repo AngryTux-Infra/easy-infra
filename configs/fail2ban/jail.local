@@ -1,0 +1,71 @@
+# configs/fail2ban/jail.local — Configuração de jails do Fail2ban
+#
+# IMPORTANTE: Este arquivo NUNCA deve editar jail.conf.
+# Todas as customizações ficam exclusivamente neste jail.local.
+#
+# Placeholders substituídos pelo script 05-fail2ban.sh:
+#   {{SSH_PORT}}     — porta SSH definida em common.sh / .env (padrão: 2222)
+#   {{F2B_BANTIME}}  — duração do ban em segundos (padrão: 3600)
+#   {{F2B_FINDTIME}} — janela de tempo para contagem de falhas em segundos (padrão: 600)
+#   {{F2B_MAXRETRY}} — número máximo de tentativas antes do ban (padrão: 5)
+
+[DEFAULT]
+
+# Duração do ban (em segundos). Valores negativos = ban permanente.
+bantime  = {{F2B_BANTIME}}
+
+# Janela de tempo na qual as tentativas são contadas (em segundos).
+findtime = {{F2B_FINDTIME}}
+
+# Número máximo de falhas antes do ban ser aplicado.
+maxretry = {{F2B_MAXRETRY}}
+
+# Ação de ban: usa UFW como backend para integração com o firewall.
+# Requer que o UFW esteja habilitado (configurado em 03-firewall.sh).
+banaction = ufw
+
+# Envia notificações apenas para o log local (sem MTA configurado por padrão).
+mta = sendmail
+
+# Protocolo padrão para os jails que não especificam o próprio.
+protocol = tcp
+
+# ==============================================================================
+# Jail: sshd — Proteção contra força bruta no SSH
+# ==============================================================================
+
+[sshd]
+
+enabled  = true
+port     = {{SSH_PORT}}
+filter   = sshd
+logpath  = /var/log/auth.log
+
+# systemd é o backend preferido em Debian/Ubuntu modernos com journald.
+# Ignora o logpath acima quando ativo; mantido como fallback documental.
+backend  = systemd
+
+maxretry = {{F2B_MAXRETRY}}
+
+# ==============================================================================
+# Jail: recidive — Ban progressivo para reincidentes
+#
+# Bane IPs que já foram banidos múltiplas vezes por outros jails.
+# Atua como segunda camada de proteção para atacantes persistentes.
+# ==============================================================================
+
+[recidive]
+
+enabled   = true
+filter    = recidive
+logpath   = /var/log/fail2ban.log
+banaction = ufw
+
+# Ban de 1 semana para reincidentes (604800 segundos).
+bantime   = 604800
+
+# Janela de observação: 1 dia (86400 segundos).
+findtime  = 86400
+
+# Bane após ser banido 5 vezes por outros jails dentro da janela.
+maxretry  = 5
