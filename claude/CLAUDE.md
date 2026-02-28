@@ -4,75 +4,98 @@ Instruções para agentes AI trabalharem neste repositório.
 
 ## Projeto
 
-Setup inicial de servidor Linux (Debian/Ubuntu). Scripts bash idempotentes para hardening, firewall, usuários, fail2ban, updates e monitoramento.
+Automação de setup inicial de servidores Linux (Debian/Ubuntu) com Ansible. Roles idempotentes para hardening, firewall, usuários, fail2ban, updates e monitoramento. Aplicável a N servidores via inventário.
 
 ## Agent Team
 
-Este projeto opera com três agentes especializados:
-
 ### tech-lead (Opus)
 
-- **Papel**: Gerenciamento do projeto, decisões de tecnologia, priorização de atividades
-- **Atua como**: Review advocate — revisa PRs e trabalho dos outros agentes
-- **Responsabilidades**:
-  - Criar e manter PRDs e ADRs
-  - Definir prioridades e dependências entre issues
-  - Revisar entregas de sysops e devops
-  - Aprovar ou solicitar mudanças em PRs
-  - Garantir coerência arquitetural entre scripts
-- **Não faz**: Implementação direta de scripts (delega para sysops/devops)
+- Gerenciamento do projeto, decisões de tecnologia, priorização
+- Review advocate — revisa entregas de sysops e devops
+- Cria e mantém PRDs e ADRs
+- Não implementa diretamente (delega)
 
 ### sysops (Sonnet)
 
-- **Papel**: Especialista em sistema operacional e infraestrutura
-- **Responsabilidades**:
-  - Configuração de serviços do sistema (SSH, NTP, fail2ban, UFW)
-  - Hardening e segurança do OS
-  - Gestão de usuários, grupos e permissões
-  - Configurações de rede e hostname
-  - Logs e auditoria do sistema
-  - Arquivos de configuração em `configs/`
-- **Foco**: O que configurar no servidor e por quê (visão do sistema)
+- Sistema operacional, serviços, hardening, segurança
+- Configuração de SSH, NTP, fail2ban, UFW, users
+- Foco: o que configurar e por quê
 
 ### devops (Sonnet)
 
-- **Papel**: Especialista em automação e estrutura de scripts
-- **Responsabilidades**:
-  - Estrutura e organização dos scripts em `scripts/`
-  - Idempotência — scripts podem rodar múltiplas vezes sem efeitos colaterais
-  - Tratamento de erros e logging nos scripts
-  - Validação de pré-requisitos (OS, permissões, dependências)
-  - Ordem de execução e orquestração
-  - Portabilidade entre distribuições quando aplicável
-- **Foco**: Como automatizar (visão da engenharia de scripts)
+- Estrutura das roles, templates Jinja2, handlers
+- Idempotência, validação, orquestração
+- Foco: como automatizar
 
-## Convenções de código
+## Convenções Ansible
 
-### Scripts bash
+### YAML
 
-- Shebang: `#!/usr/bin/env bash`
-- `set -euo pipefail` em todo script
-- Padrão obrigatório no header:
-  ```bash
-  #!/usr/bin/env bash
-  set -euo pipefail
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  source "${SCRIPT_DIR}/../lib/common.sh"
-  require_root
-  log_info "Iniciando: $(basename "$0")"
-  ```
-- Funções do `lib/common.sh`: `log_info`, `log_warn`, `log_error`, `require_root`, `is_installed`, `ensure_package`
-- Variáveis em UPPER_CASE para constantes/config, lower_case para locais
-- Nomes de arquivo: `NN-descricao.sh` (numerados por ordem de execução)
-- Idempotência: verificar estado antes de alterar (md5sum, grep, etc)
-- Validar antes de aplicar (ex: `sshd -t`, `visudo -cf`)
-- Rollback em caso de falha de validação
+- 2 espaços de indentação
+- Cada task com `name:` descritivo em inglês
+- Listas com `- item` (não inline)
+- Booleanos: `true`/`false` (não `yes`/`no`)
 
-### Configurações
+### Roles
 
-- Arquivos em `configs/` são templates com placeholders `{{VARIABLE}}`
-- Substituição via `sed` ou expansão bash em runtime
-- Comentar toda diretiva não-default
+Cada role segue a estrutura:
+```
+roles/<name>/
+├── tasks/main.yml       # Tasks da role
+├── defaults/main.yml    # Variáveis com defaults
+├── handlers/main.yml    # Handlers (restart serviços)
+├── templates/           # Templates Jinja2 (.j2)
+└── files/               # Arquivos estáticos
+```
+
+### Templates Jinja2
+
+- Extensão `.j2`
+- Variáveis: `{{ variavel }}` (com espaços)
+- Comentários: `{# comentário #}`
+- Cabeçalho: `# Managed by Ansible — do not edit manually`
+
+### Handlers
+
+- Usar `notify:` nas tasks que alteram config
+- Handler só executa se a task reportou `changed`
+- Padrão: `restart <serviço>`
+
+### Variáveis
+
+- snake_case sempre
+- Defaults em `roles/<name>/defaults/main.yml`
+- Overrides em `group_vars/` ou `host_vars/`
+- Precedência: defaults → group_vars/all → group_vars/<grupo> → host_vars/<host>
+
+### Idempotência
+
+- Módulos Ansible são nativamente idempotentes — não reinventar
+- `template` com `validate:` para configs críticas (sshd, sudoers)
+- `backup: true` em configs que podem quebrar acesso
+- Handlers para restart condicional
+
+## Comandos úteis
+
+```bash
+# Syntax check
+ansible-playbook site.yml --syntax-check
+
+# Dry-run com diff
+ansible-playbook site.yml --check --diff
+
+# Apenas uma role
+ansible-playbook site.yml --tags ssh
+
+# Apenas um host
+ansible-playbook site.yml --limit web01
+
+# Inventário específico
+ansible-playbook -i inventories/staging/hosts.yml site.yml
+
+# Testar conectividade
+ansible all -m ping
+```
 
 ## Como trabalhar com issues
 
@@ -85,62 +108,26 @@ Este projeto opera com três agentes especializados:
 
 ### Nunca faça
 
-- Trabalhar em issue `status:draft` — está incompleta
-- Ignorar a seção Refs — contém contexto essencial
+- Trabalhar em issue `status:draft`
+- Ignorar a seção Refs
 - Criar PRs sem referenciar a issue (`Closes #N`)
 - Pular transições de status
-- Deletar issues (apenas feche)
 - Alterar PRDs aprovados
-
-### Output por tipo
-
-| Tipo | O que produzir |
-|------|---------------|
-| `type:prd` | Issue body com requisitos e critérios de aceite |
-| `type:adr` | Análise de opções + decisão documentada |
-| `type:task` | Entregável concreto referenciando a issue |
-| `type:bug` | Fix referenciando a issue |
 
 ### Transições de status
 
 ```bash
-# Pegar uma task
-gh issue edit N --remove-label "status:ready" --add-label "status:in-progress" --add-assignee "@me"
-
-# Terminar e pedir review
+gh issue edit N --remove-label "status:ready" --add-label "status:in-progress"
 gh issue edit N --remove-label "status:in-progress" --add-label "status:review"
-```
-
-### Consultas úteis
-
-```bash
-gh issue list --label "status:ready"     # O que posso pegar?
-gh issue list --label "status:review"    # O que precisa de review?
-gh issue list --label "blocked"          # O que está travado?
-```
-
-## Testes
-
-```bash
-# Validar sintaxe de todos os scripts
-for f in scripts/*.sh lib/*.sh run-all.sh; do bash -n "$f" && echo "OK: $f"; done
-
-# Shellcheck (se disponível)
-shellcheck scripts/*.sh lib/common.sh run-all.sh
-
-# Dry-run do orquestrador
-sudo ./run-all.sh --dry-run
-
-# Health-check do servidor (pós-setup)
-server-health
 ```
 
 ## Arquivos-chave
 
 | Arquivo | Propósito |
 |---------|-----------|
-| `run-all.sh` | Entry point — orquestra todos os scripts |
-| `lib/common.sh` | Funções compartilhadas (logging, package mgmt, .env) |
-| `.env.example` | Template de variáveis configuráveis |
-| `configs/sshd_config` | Template SSH hardening (ADR #3) |
-| `configs/fail2ban/jail.local` | Template jails fail2ban |
+| `site.yml` | Playbook principal — entry point |
+| `ansible.cfg` | Configuração Ansible (inventory, forks, pipelining) |
+| `inventories/production/group_vars/all.yml` | Variáveis globais |
+| `roles/ssh/templates/sshd_config.j2` | Template SSH hardening (ADR #5) |
+| `roles/fail2ban/templates/jail.local.j2` | Template jails fail2ban |
+| `scripts/` | Codebase bash original (referência de migração) |

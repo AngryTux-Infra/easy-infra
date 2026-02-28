@@ -1,40 +1,36 @@
 # easy-infra
 
-Setup inicial de servidor Linux — scripts bash idempotentes para provisionar servidores Debian/Ubuntu seguros e padronizados.
+Automação de setup inicial de servidores Linux (Debian/Ubuntu) com Ansible — replicável para N servidores, idempotente, configurável por host/grupo.
 
 ## O que faz
 
-Automatiza o setup completo de um servidor Linux em menos de 5 minutos:
+Aplica um baseline de segurança e configuração em qualquer número de servidores:
 
 ```bash
-sudo ./run-all.sh
-```
+# Setup completo em todos os servidores
+ansible-playbook site.yml
 
-Ou execute scripts individuais:
+# Apenas SSH e firewall
+ansible-playbook site.yml --tags ssh,firewall
 
-```bash
-sudo ./run-all.sh 01 03 05     # apenas base, firewall e fail2ban
-sudo ./run-all.sh --dry-run    # lista scripts sem executar
+# Dry-run — mostra o que mudaria sem executar
+ansible-playbook site.yml --check --diff
+
+# Servidor específico
+ansible-playbook site.yml --limit web01
 ```
 
 ## O que é configurado
 
-| Script | O que faz |
-|--------|-----------|
-| `01-base-setup.sh` | Hostname, timezone, locale, NTP, pacotes essenciais |
-| `02-ssh-hardening.sh` | SSH key-only, porta customizável, criptografia moderna, rollback automático |
-| `03-firewall.sh` | UFW deny-by-default, rate limiting na porta SSH |
-| `04-users.sh` | Usuário admin, sudo sem senha, authorized_keys |
-| `05-fail2ban.sh` | Proteção brute-force SSH + jail recidive (ban progressivo) |
-| `06-updates.sh` | unattended-upgrades para security patches automáticos |
-| `07-monitoring.sh` | sysstat, logwatch, comando `server-health` |
-
-## Princípios
-
-- **Idempotente** — rodar qualquer script duas vezes produz o mesmo resultado
-- **Configurável** — tudo via `.env` (copie de `.env.example`)
-- **Seguro** — hardening SSH agressivo, firewall deny-by-default, fail2ban
-- **Modular** — cada script funciona sozinho ou em sequência
+| Role | O que faz | Tag |
+|------|-----------|-----|
+| `base` | Hostname, timezone, locale, NTP, pacotes essenciais | `base` |
+| `ssh` | Hardening SSH — key-only, porta customizável, criptografia moderna | `ssh` |
+| `firewall` | UFW deny-by-default, rate limiting SSH, portas/IPs configuráveis | `firewall` |
+| `users` | Usuário admin, sudo sem senha, authorized_keys | `users` |
+| `fail2ban` | Proteção brute-force SSH + jail recidive (ban progressivo) | `fail2ban` |
+| `updates` | unattended-upgrades para security patches automáticos | `updates` |
+| `monitoring` | sysstat, logwatch, comando `server-health` | `monitoring` |
 
 ## Quick start
 
@@ -42,126 +38,130 @@ sudo ./run-all.sh --dry-run    # lista scripts sem executar
 git clone https://github.com/AngryTux-Infra/easy-infra.git
 cd easy-infra
 
-# Configure suas variáveis
-cp .env.example .env
-vim .env
+# Configure o inventário
+vim inventories/production/hosts.yml
+vim inventories/production/group_vars/all.yml
 
-# Execute como root
-sudo ./run-all.sh
+# Teste conectividade
+ansible all -m ping
+
+# Aplique (dry-run primeiro)
+ansible-playbook site.yml --check --diff
+ansible-playbook site.yml
 ```
 
-## Configuração (.env)
+## Inventário
 
-```bash
+```yaml
+# inventories/production/hosts.yml
+all:
+  children:
+    webservers:
+      hosts:
+        web01:
+          ansible_host: 192.168.1.10
+        web02:
+          ansible_host: 192.168.1.11
+    dbservers:
+      hosts:
+        db01:
+          ansible_host: 192.168.1.20
+```
+
+### Variáveis por grupo/host
+
+```
+inventories/production/
+├── hosts.yml
+├── group_vars/
+│   ├── all.yml            # Defaults globais (ssh_port, admin_user, etc)
+│   └── webservers.yml     # Portas 80/443 para webservers
+└── host_vars/
+    └── web01.yml           # Overrides específicos do host
+```
+
+Hierarquia de precedência: `role defaults → group_vars/all → group_vars/<grupo> → host_vars/<host> → CLI`
+
+## Principais variáveis (group_vars/all.yml)
+
+```yaml
 # SSH
-SSH_PORT=2222                    # porta customizável (default: 2222)
-SSH_PASSWORD_AUTH=no             # apenas chaves SSH
-SSH_PERMIT_ROOT_LOGIN=no         # root login desabilitado
+ssh_port: 2222
+ssh_password_auth: false
+ssh_permit_root_login: false
 
 # Usuário admin
-ADMIN_USER=sysadmin              # nome do usuário admin
-ADMIN_SSH_KEY="ssh-ed25519 ..."  # chave pública do admin
+admin_user: sysadmin
+admin_groups: [sudo, adm]
+admin_ssh_key: ""               # ssh-ed25519 AAAA...
 
 # Servidor
-SERVER_HOSTNAME=web01            # hostname (vazio = não altera)
-SERVER_TIMEZONE=America/Sao_Paulo
+server_hostname: ""              # vazio = não altera
+server_timezone: UTC
 
 # Firewall
-ALLOWED_PORTS="80,443"           # portas adicionais além do SSH
-FIREWALL_ALLOWED_IPS="10.0.0.0/8"
+allowed_ports: []                # ["80/tcp", "443/tcp"]
+firewall_allowed_ips: []         # ["10.0.0.0/8"]
 
 # Fail2ban
-F2B_BANTIME=3600                 # tempo de ban em segundos
-F2B_MAXRETRY=5                   # tentativas antes do ban
+f2b_bantime: 3600
+f2b_maxretry: 5
 
 # Updates
-AUTO_REBOOT=false                # reboot automático após updates
+auto_reboot: false
+notify_email: ""
 ```
 
 ## Estrutura do projeto
 
 ```
 easy-infra/
-├── run-all.sh                       # Orquestrador principal
-├── .env.example                     # Template de configuração
-├── lib/
-│   └── common.sh                    # Funções compartilhadas (logging, helpers)
-├── scripts/
-│   ├── 01-base-setup.sh
-│   ├── 02-ssh-hardening.sh
-│   ├── 03-firewall.sh
-│   ├── 04-users.sh
-│   ├── 05-fail2ban.sh
-│   ├── 06-updates.sh
-│   └── 07-monitoring.sh
-├── configs/                         # Templates de configuração
-│   ├── sshd_config                  # SSH hardening (ADR #3)
-│   ├── ssh_banner.txt               # Banner legal
-│   ├── fail2ban/
-│   │   └── jail.local               # Jails SSH + recidive
-│   ├── unattended-upgrades/
-│   │   ├── 50unattended-upgrades
-│   │   └── 20auto-upgrades
-│   ├── sudoers.d/
-│   │   └── admin-nopasswd
-│   └── monitoring/
-│       └── server-health.sh         # Health-check standalone
-├── docs/
-│   └── convencoes.md                # Convenções agile-issues
+├── ansible.cfg
+├── site.yml                         # Playbook principal
+├── inventories/
+│   ├── production/
+│   │   ├── hosts.yml
+│   │   └── group_vars/all.yml
+│   └── staging/
+│       ├── hosts.yml
+│       └── group_vars/all.yml
+├── roles/
+│   ├── base/                        # Hostname, timezone, pacotes
+│   ├── ssh/                         # Hardening SSH (ADR #5)
+│   ├── firewall/                    # UFW
+│   ├── users/                       # Admin user, sudo, keys
+│   ├── fail2ban/                    # Brute-force protection
+│   ├── updates/                     # Unattended-upgrades
+│   └── monitoring/                  # sysstat, server-health
+├── scripts/                         # Codebase bash original (referência)
+├── configs/                         # Configs bash originais (referência)
+├── docs/                            # Convenções agile-issues
 ├── guides/                          # Guias do workflow
-├── templates/                       # Templates de issues
-│   ├── issues/
-│   │   ├── prd.md
-│   │   ├── adr.md
-│   │   ├── task.md
-│   │   └── bug.md
-│   ├── labels.json
-│   └── CONTRIBUTING.md
-└── claude/
-    └── CLAUDE.md                    # Instruções para agentes AI
+└── templates/                       # Templates de issues
 ```
 
-## Cadeia de execução
+## Idempotência
 
-```mermaid
-graph TD
-    A[01-base-setup.sh] --> B[02-ssh-hardening.sh]
-    A --> C[03-firewall.sh]
-    A --> D[04-users.sh]
-    B --> E[05-fail2ban.sh]
-    C --> E
-    D --> E
-    A --> F[06-updates.sh]
-    E --> G[07-monitoring.sh]
-    F --> G
-```
+Todos os módulos Ansible são nativamente idempotentes:
 
-## Após o setup
+- `apt` — instala apenas se não presente
+- `template` — aplica apenas se conteúdo mudou, com `validate` antes
+- `ufw` — não duplica regras existentes
+- `user` — não recria usuário existente
+- `authorized_key` — não duplica chaves
+- Handlers — restart apenas quando notificados (config mudou)
 
-Verifique o estado do servidor a qualquer momento:
-
-```bash
-server-health
-```
-
-## Agent Team
-
-Este projeto foi desenvolvido usando AI agent teams com três papéis:
-
-| Role | Model | Responsabilidades |
-|------|-------|-------------------|
-| **tech-lead** | Opus | Gerenciamento, decisões técnicas, review advocate |
-| **sysops** | Sonnet | Sistema operacional, hardening, serviços |
-| **devops** | Sonnet | Estrutura de scripts, automação, idempotência |
-
-## Workflow
-
-Baseado no [agile-issues-template](https://github.com/AngryTux-Infra/agile-issues-template). Issues como contratos de trabalho: PRD → ADR → Task.
+Reaplicar em servidor já configurado: **zero mudanças, zero risco.**
 
 ## Compatibilidade
 
 - Debian 12+
 - Ubuntu 22.04+
+- Ansible 2.14+ no control node
+
+## Histórico
+
+Este projeto começou como bash scripts (preservados em `scripts/` como referência) e foi migrado para Ansible após decisão arquitetural (ADR #2) para suportar gestão de N servidores com idempotência nativa.
 
 ## Licença
 
