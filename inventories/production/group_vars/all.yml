@@ -1,0 +1,108 @@
+---
+# group_vars/all.yml — Variáveis globais para o ambiente de produção
+# Migrado de .env.example para o padrão Ansible (snake_case)
+
+# ==============================================================================
+# Configurações de SSH
+# ==============================================================================
+
+# Porta do servidor SSH
+# Alterar para uma porta não-padrão reduz ataques automatizados
+ssh_port: 2222
+
+# Permitir autenticação por senha via SSH (yes/no)
+# Recomendado: "no" — usar apenas chaves SSH
+ssh_password_auth: "no"
+
+# Permitir login direto do root via SSH (yes/no)
+# Recomendado: "no" — acessar via usuário admin e usar sudo
+ssh_permit_root_login: "no"
+
+# ==============================================================================
+# Usuário administrador
+# ==============================================================================
+
+# Nome do usuário administrador a ser criado no servidor
+admin_user: sysadmin
+
+# Diretório home do usuário administrador
+admin_home: /home/sysadmin
+
+# Grupos adicionais para o usuário administrador
+admin_groups:
+  - sudo
+  - adm
+
+# Chave pública SSH do usuário administrador
+# Exemplo: ssh-ed25519 AAAA... usuario@maquina
+admin_ssh_key: ""
+
+# ==============================================================================
+# Configurações do servidor
+# ==============================================================================
+
+# Fuso horário do servidor
+# Lista de fusos: timedatectl list-timezones
+# Exemplos: America/Sao_Paulo, America/New_York, Europe/London, UTC
+server_timezone: UTC
+
+# Hostname do servidor
+# Deixe vazio para não alterar o hostname atual
+server_hostname: ""
+
+# ==============================================================================
+# Atualizações automáticas
+# ==============================================================================
+
+# Habilitar atualizações automáticas de segurança via unattended-upgrades
+auto_security_updates: true
+
+# Reiniciar automaticamente após atualizações de kernel (quando necessário)
+auto_reboot: false
+
+# E-mail para notificações de atualização automática
+notify_email: ""
+
+# ==============================================================================
+# Firewall
+# ==============================================================================
+
+# Portas permitidas no firewall (lista)
+allowed_ports:
+  - 22
+  - 80
+  - 443
+
+# Endereços IP ou redes com acesso irrestrito ao firewall (lista)
+# Útil para liberar acesso de IPs de confiança além das regras padrão
+firewall_allowed_ips: []
+
+# ==============================================================================
+# Fail2ban
+# ==============================================================================
+
+# Tempo de banimento em segundos (padrão: 1 hora)
+f2b_bantime: 3600
+
+# Janela de tempo para contagem de falhas em segundos (padrão: 10 minutos)
+f2b_findtime: 600
+
+# Número máximo de tentativas antes do banimento
+f2b_maxretry: 5
+
+# ==============================================================================
+# APT e pacotes
+# ==============================================================================
+
+# Codinome da release do Debian/Ubuntu para repositórios APT externos
+# Detectado automaticamente se vazio; defina manualmente se necessário
+# Exemplos para Debian: bookworm, bullseye, buster
+# Exemplos para Ubuntu: noble, jammy, focal
+apt_release: ""
+
+# ==============================================================================
+# Logs
+# ==============================================================================
+
+# Diretório onde easy-infra armazena seus próprios logs de execução
+log_dir: /var/log/easy-infra

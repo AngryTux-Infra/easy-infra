@@ -1,0 +1,12 @@
+---
+- name: Easy-infra — Setup inicial de servidor Linux
+  hosts: all
+  become: true
+  roles:
+    - { role: base, tags: ['base'] }
+    - { role: ssh, tags: ['ssh'] }
+    - { role: firewall, tags: ['firewall'] }
+    - { role: users, tags: ['users'] }
+    - { role: fail2ban, tags: ['fail2ban'] }
+    - { role: updates, tags: ['updates'] }
+    - { role: monitoring, tags: ['monitoring'] }

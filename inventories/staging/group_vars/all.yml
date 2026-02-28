@@ -1,0 +1,98 @@
+---
+# group_vars/all.yml — Variáveis globais para o ambiente de staging
+# Migrado de .env.example para o padrão Ansible (snake_case)
+# staging environment
+
+# ==============================================================================
+# Configurações de SSH
+# ==============================================================================
+
+# Porta do servidor SSH
+ssh_port: 2222
+
+# Permitir autenticação por senha via SSH (yes/no)
+ssh_password_auth: "no"
+
+# Permitir login direto do root via SSH (yes/no)
+ssh_permit_root_login: "no"
+
+# ==============================================================================
+# Usuário administrador
+# ==============================================================================
+
+# Nome do usuário administrador a ser criado no servidor
+admin_user: sysadmin
+
+# Diretório home do usuário administrador
+admin_home: /home/sysadmin
+
+# Grupos adicionais para o usuário administrador
+admin_groups:
+  - sudo
+  - adm
+
+# Chave pública SSH do usuário administrador
+admin_ssh_key: ""
+
+# ==============================================================================
+# Configurações do servidor
+# ==============================================================================
+
+# Fuso horário do servidor
+server_timezone: UTC
+
+# Hostname do servidor
+server_hostname: ""
+
+# ==============================================================================
+# Atualizações automáticas
+# ==============================================================================
+
+# Habilitar atualizações automáticas de segurança via unattended-upgrades
+auto_security_updates: true
+
+# Reiniciar automaticamente após atualizações de kernel (quando necessário)
+auto_reboot: false
+
+# E-mail para notificações de atualização automática
+notify_email: ""
+
+# ==============================================================================
+# Firewall
+# ==============================================================================
+
+# Portas permitidas no firewall (lista)
+allowed_ports:
+  - 22
+  - 80
+  - 443
+
+# Endereços IP ou redes com acesso irrestrito ao firewall (lista)
+firewall_allowed_ips: []
+
+# ==============================================================================
+# Fail2ban
+# ==============================================================================
+
+# Tempo de banimento em segundos
+f2b_bantime: 3600
+
+# Janela de tempo para contagem de falhas em segundos
+f2b_findtime: 600
+
+# Número máximo de tentativas antes do banimento
+f2b_maxretry: 5
+
+# ==============================================================================
+# APT e pacotes
+# ==============================================================================
+
+# Codinome da release do Debian/Ubuntu para repositórios APT externos
+apt_release: ""
+
+# ==============================================================================
+# Logs
+# ==============================================================================
+
+# Diretório onde easy-infra armazena seus próprios logs de execução
+log_dir: /var/log/easy-infra
