@@ -1,0 +1,37 @@
+---
+# roles/users/tasks/main.yml
+# Tradução de scripts/04-users.sh
+
+- name: Criar usuário administrador
+  user:
+    name: "{{ admin_user }}"
+    home: "{{ admin_home }}"
+    shell: "{{ admin_shell }}"
+    groups: "{{ admin_groups }}"
+    append: true
+    create_home: true
+    comment: "Admin user managed by easy-infra"
+    state: present
+
+- name: Copiar authorized_keys do root para o usuário admin
+  authorized_key:
+    user: "{{ admin_user }}"
+    key: "{{ lookup('file', '/root/.ssh/authorized_keys') }}"
+    state: present
+  ignore_errors: true
+
+- name: Adicionar chave SSH do admin ao authorized_keys
+  authorized_key:
+    user: "{{ admin_user }}"
+    key: "{{ admin_ssh_key }}"
+    state: present
+  when: admin_ssh_key != ""
+
+- name: Instalar configuração sudoers para o usuário admin
+  copy:
+    src: admin-nopasswd
+    dest: "{{ sudoers_dest }}"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "visudo -cf %s"

@@ -1,0 +1,43 @@
+---
+# roles/firewall/tasks/main.yml — Configuração de firewall com UFW
+# Migrado de scripts/03-firewall.sh
+
+- name: Instalar UFW
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+
+- name: Definir política padrão — bloquear entrada
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+
+- name: Definir política padrão — permitir saída
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+
+- name: Liberar porta SSH com rate limiting
+  community.general.ufw:
+    rule: limit
+    port: "{{ ssh_port }}"
+    proto: tcp
+
+- name: Liberar portas adicionais
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+  loop: "{{ allowed_ports }}"
+  when: allowed_ports | length > 0
+
+- name: Liberar IPs/redes confiáveis
+  community.general.ufw:
+    rule: allow
+    from_ip: "{{ item }}"
+  loop: "{{ firewall_allowed_ips }}"
+  when: firewall_allowed_ips | length > 0
+
+- name: Habilitar UFW
+  community.general.ufw:
+    state: enabled

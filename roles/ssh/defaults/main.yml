@@ -1,0 +1,30 @@
+---
+# roles/ssh/defaults/main.yml — Valores padrão para a role ssh
+# Sobrescreva em group_vars ou host_vars conforme necessário
+
+# Porta do servidor SSH
+ssh_port: 2222
+
+# Permitir autenticação por senha (yes/no)
+ssh_password_auth: "no"
+
+# Permitir login direto do root (yes/no)
+ssh_permit_root_login: "no"
+
+# Número máximo de tentativas de autenticação por conexão
+ssh_max_auth_tries: 3
+
+# Número máximo de sessões simultâneas por conexão
+ssh_max_sessions: 5
+
+# Tempo máximo para completar a autenticação (segundos)
+ssh_login_grace_time: 30
+
+# Intervalo de keepalive (segundos)
+ssh_client_alive_interval: 180
+
+# Quantidade de keepalives sem resposta antes de encerrar a sessão
+ssh_client_alive_count_max: 2
+
+# Caminho do banner SSH no servidor
+ssh_banner_path: /etc/ssh/banner

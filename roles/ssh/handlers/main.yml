@@ -1,0 +1,7 @@
+---
+# roles/ssh/handlers/main.yml — Handlers da role ssh
+
+- name: restart sshd
+  ansible.builtin.service:
+    name: "{{ 'sshd' if ansible_facts.services is defined and 'sshd.service' in ansible_facts.services else 'ssh' }}"
+    state: restarted

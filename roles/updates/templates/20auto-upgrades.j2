@@ -1,0 +1,14 @@
+// Ativa o serviço de atualizações automáticas via APT::Periodic
+// Gerado pelo easy-infra (Ansible) — NÃO edite manualmente
+
+// Atualizar lista de pacotes diariamente (1 = habilitado)
+APT::Periodic::Update-Package-Lists "1";
+
+// Baixar pacotes atualizáveis automaticamente (1 = habilitado)
+APT::Periodic::Download-Upgradeable-Packages "1";
+
+// Executar unattended-upgrades diariamente (1 = habilitado)
+APT::Periodic::Unattended-Upgrade "1";
+
+// Remover pacotes obsoletos do cache a cada 7 dias
+APT::Periodic::AutocleanInterval "7";

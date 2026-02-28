@@ -1,0 +1,15 @@
+---
+# roles/fail2ban/defaults/main.yml — Valores padrão para a role fail2ban
+# Sobrescreva em group_vars ou host_vars conforme necessário
+
+# Porta SSH monitorada pelo jail sshd
+ssh_port: 2222
+
+# Duração do ban em segundos (padrão: 1 hora)
+f2b_bantime: 3600
+
+# Janela de tempo para contagem de falhas em segundos (padrão: 10 minutos)
+f2b_findtime: 600
+
+# Número máximo de tentativas antes do ban
+f2b_maxretry: 5

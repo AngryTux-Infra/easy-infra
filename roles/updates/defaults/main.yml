@@ -1,0 +1,9 @@
+---
+# roles/updates/defaults/main.yml — Defaults da role updates
+# Sobrescreva em group_vars ou host_vars conforme necessário
+
+# Reinicialização automática após atualizações que exigem reboot
+auto_reboot: false
+
+# E-mail para notificações de atualização automática (vazio = desabilitado)
+notify_email: ""

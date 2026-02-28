@@ -1,0 +1,34 @@
+---
+# roles/ssh/tasks/main.yml — Tasks da role ssh
+
+- name: Instalar o pacote openssh-server
+  ansible.builtin.apt:
+    name: openssh-server
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Fazer deploy do sshd_config a partir do template
+  ansible.builtin.template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: "0600"
+    validate: "sshd -t -f %s"
+    backup: true
+  notify: restart sshd
+
+- name: Fazer deploy do banner SSH
+  ansible.builtin.copy:
+    src: ssh_banner.txt
+    dest: "{{ ssh_banner_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Garantir que o serviço sshd está habilitado e em execução
+  ansible.builtin.systemd:
+    name: "{{ 'sshd' if ansible_service_mgr == 'systemd' and ansible_facts.services is defined and 'sshd.service' in ansible_facts.services else 'ssh' }}"
+    enabled: true
+    state: started

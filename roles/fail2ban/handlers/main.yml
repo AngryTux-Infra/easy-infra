@@ -1,0 +1,7 @@
+---
+# roles/fail2ban/handlers/main.yml — Handlers da role fail2ban
+
+- name: restart fail2ban
+  ansible.builtin.service:
+    name: fail2ban
+    state: restarted

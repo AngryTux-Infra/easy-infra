@@ -1,0 +1,15 @@
+---
+# roles/base/defaults/main.yml
+
+# Pacotes essenciais a instalar no setup base
+base_packages:
+  - curl
+  - wget
+  - vim
+  - htop
+  - net-tools
+  - unzip
+  - git
+  - jq
+  - locales
+  - systemd-timesyncd

@@ -1,0 +1,11 @@
+---
+# roles/firewall/defaults/main.yml — Defaults da role firewall
+# Sobrescreva em group_vars ou host_vars conforme necessário
+
+# Portas adicionais a liberar no firewall (além da porta SSH)
+# Exemplo: [80, 443, 8080]
+allowed_ports: []
+
+# IPs ou redes com acesso irrestrito ao firewall
+# Exemplo: ["192.168.1.0/24", "10.0.0.5"]
+firewall_allowed_ips: []

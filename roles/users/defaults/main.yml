@@ -1,0 +1,8 @@
+---
+# roles/users/defaults/main.yml
+
+# Shell padrão do usuário administrador
+admin_shell: /bin/bash
+
+# Destino do arquivo sudoers no sistema gerenciado
+sudoers_dest: /etc/sudoers.d/admin-nopasswd

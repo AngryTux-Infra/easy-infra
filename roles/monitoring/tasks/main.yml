@@ -1,0 +1,48 @@
+---
+# roles/monitoring/tasks/main.yml — Configuração de monitoramento
+# Migrado de scripts/07-monitoring.sh
+
+- name: Instalar sysstat e logwatch
+  ansible.builtin.apt:
+    name:
+      - sysstat
+      - logwatch
+    state: present
+    update_cache: true
+
+- name: Habilitar coleta de dados do sysstat
+  ansible.builtin.lineinfile:
+    path: /etc/default/sysstat
+    regexp: '^ENABLED='
+    line: 'ENABLED="true"'
+    state: present
+
+- name: Configurar cron do sysstat — coleta a cada 10 minutos
+  ansible.builtin.copy:
+    dest: /etc/cron.d/sysstat
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # /etc/cron.d/sysstat — coleta de estatísticas a cada 10 minutos
+      # Gerenciado pelo easy-infra (Ansible) — NÃO edite manualmente
+      PATH=/usr/lib/sysstat:/usr/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+
+      */10 * * * * root command -v debian-sa1 > /dev/null && debian-sa1 1 1
+
+      # Gera resumo diário às 23:59
+      59 23 * * * root command -v debian-sa1 > /dev/null && debian-sa1 60 2
+
+- name: Instalar script de health-check
+  ansible.builtin.copy:
+    src: server-health.sh
+    dest: "{{ health_script_dest }}"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Habilitar e iniciar serviço sysstat
+  ansible.builtin.systemd:
+    name: sysstat
+    enabled: true
+    state: started

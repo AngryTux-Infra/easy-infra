@@ -1,0 +1,6 @@
+---
+# roles/monitoring/defaults/main.yml — Defaults da role monitoring
+# Sobrescreva em group_vars ou host_vars conforme necessário
+
+# Destino do script de health-check no servidor
+health_script_dest: /usr/local/bin/server-health

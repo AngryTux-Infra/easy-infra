@@ -1,0 +1,43 @@
+---
+# roles/base/tasks/main.yml
+# Tradução de scripts/01-base-setup.sh
+
+- name: Configurar hostname do servidor
+  hostname:
+    name: "{{ server_hostname }}"
+  when: server_hostname != ""
+
+- name: Configurar timezone do servidor
+  timezone:
+    name: "{{ server_timezone }}"
+
+- name: Instalar pacote locales
+  apt:
+    name: locales
+    state: present
+    update_cache: true
+
+- name: Gerar locale en_US.UTF-8
+  locale_gen:
+    name: en_US.UTF-8
+    state: present
+
+- name: Instalar pacotes essenciais
+  apt:
+    name: "{{ base_packages }}"
+    state: present
+    update_cache: true
+
+- name: Habilitar e iniciar systemd-timesyncd
+  systemd:
+    name: systemd-timesyncd
+    enabled: true
+    state: started
+
+- name: Criar diretório de logs do easy-infra
+  file:
+    path: "{{ log_dir }}"
+    state: directory
+    mode: "0750"
+    owner: root
+    group: root

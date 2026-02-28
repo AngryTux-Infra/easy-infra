@@ -1,0 +1,40 @@
+// Configuração principal do unattended-upgrades
+// Gerado pelo easy-infra (Ansible) — NÃO edite manualmente
+
+// Origens permitidas para atualizações automáticas
+// Apenas security updates são habilitadas por padrão
+Unattended-Upgrade::Allowed-Origins {
+    // Debian
+    "${distro_id}:${distro_codename}-security";
+    // Ubuntu
+    "${distro_id}ESMApps:${distro_codename}-apps-security";
+    "${distro_id}ESM:${distro_codename}-infra-security";
+};
+
+// Pacotes que NUNCA devem ser atualizados automaticamente
+Unattended-Upgrade::Package-Blacklist {
+};
+
+// Remover dependências não utilizadas após a atualização
+Unattended-Upgrade::Remove-Unused-Dependencies "true";
+
+// Remover kernels antigos automaticamente
+Unattended-Upgrade::Remove-New-Unused-Dependencies "true";
+
+// Reinicialização automática após atualizações que exigem reboot
+Unattended-Upgrade::Automatic-Reboot "{{ auto_reboot | lower }}";
+
+// Horário para reinicialização automática (se habilitada)
+Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+
+// Endereço de e-mail para notificações (vazio = desabilitado)
+Unattended-Upgrade::Mail "{{ notify_email }}";
+
+// Enviar e-mail apenas em caso de erro (quando Mail estiver configurado)
+Unattended-Upgrade::MailOnlyOnError "true";
+
+// Registrar log verboso em /var/log/unattended-upgrades/
+Unattended-Upgrade::Verbose "false";
+
+// Limite de largura de banda para download (0 = sem limite, em KB/s)
+Acquire::http::Dl-Limit "0";
