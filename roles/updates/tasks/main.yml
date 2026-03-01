@@ -25,3 +25,10 @@
     owner: root
     group: root
     mode: "0644"
+
+- name: Habilitar timer apt-daily-upgrade
+  ansible.builtin.systemd:
+    name: apt-daily-upgrade.timer
+    enabled: true
+    state: started
+  tags: [updates]

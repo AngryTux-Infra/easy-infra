@@ -13,19 +13,14 @@
     comment: "Admin user managed by easy-infra"
     state: present
 
-- name: Copiar authorized_keys do root para o usuário admin
-  authorized_key:
-    user: "{{ admin_user }}"
-    key: "{{ lookup('file', '/root/.ssh/authorized_keys') }}"
-    state: present
-  ignore_errors: true
-
-- name: Adicionar chave SSH do admin ao authorized_keys
-  authorized_key:
+- name: Deploy SSH key for admin user (exclusive)
+  ansible.builtin.authorized_key:
     user: "{{ admin_user }}"
     key: "{{ admin_ssh_key }}"
+    exclusive: true
     state: present
   when: admin_ssh_key != ""
+  tags: [users, ssh]
 
 - name: Instalar configuração sudoers para o usuário admin
   copy:
@@ -35,3 +30,17 @@
     group: root
     mode: "0440"
     validate: "visudo -cf %s"
+
+- name: Travar senha do root
+  ansible.builtin.user:
+    name: root
+    password_lock: true
+  tags: [users, security]
+
+- name: Restringir su ao grupo admin via PAM
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/su
+    regexp: '^#?\s*auth\s+required\s+pam_wheel\.so'
+    line: 'auth       required   pam_wheel.so group={{ admin_groups | first }}'
+    state: present
+  tags: [users, security]

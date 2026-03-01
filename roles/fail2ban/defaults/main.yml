@@ -5,8 +5,11 @@
 # Porta SSH monitorada pelo jail sshd
 ssh_port: 2222
 
-# Duração do ban em segundos (padrão: 1 hora)
-f2b_bantime: 3600
+# Duração do ban em segundos (padrão: 1 semana)
+f2b_bantime: 604800
+
+# IPs/redes excluídos do ban (nunca serão banidos)
+f2b_ignoreip: "127.0.0.1/8 ::1"
 
 # Janela de tempo para contagem de falhas em segundos (padrão: 10 minutos)
 f2b_findtime: 600

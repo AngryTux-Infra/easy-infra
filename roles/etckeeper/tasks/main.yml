@@ -1,0 +1,27 @@
+---
+# roles/etckeeper/tasks/main.yml — Instalação e configuração do etckeeper
+
+- name: Instalar etckeeper e git
+  ansible.builtin.apt:
+    name:
+      - etckeeper
+      - git
+    state: present
+    update_cache: true
+  tags: [etckeeper, system]
+
+- name: Inicializar etckeeper
+  ansible.builtin.command: etckeeper init
+  args:
+    creates: /etc/.git
+  tags: [etckeeper, system]
+
+- name: Criar commit baseline
+  ansible.builtin.command: >
+    etckeeper commit "{{ etckeeper_baseline_message }}"
+  args:
+    chdir: /etc
+  register: etckeeper_baseline
+  changed_when: etckeeper_baseline.rc == 0
+  failed_when: false
+  tags: [etckeeper, system]

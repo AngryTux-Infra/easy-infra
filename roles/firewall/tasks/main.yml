@@ -18,11 +18,24 @@
     direction: outgoing
     policy: allow
 
-- name: Liberar porta SSH com rate limiting
+- name: Liberar porta SSH com rate limiting (apenas LAN)
   community.general.ufw:
     rule: limit
     port: "{{ ssh_port }}"
     proto: tcp
+    from_ip: "{{ networks.lan.cidr }}"
+    comment: "SSH from LAN"
+  when: ssh_restrict_to_lan | default(true)
+  tags: [firewall]
+
+- name: Liberar porta SSH com rate limiting (irrestrito)
+  community.general.ufw:
+    rule: limit
+    port: "{{ ssh_port }}"
+    proto: tcp
+    comment: "SSH"
+  when: not (ssh_restrict_to_lan | default(true))
+  tags: [firewall]
 
 - name: Liberar portas adicionais
   community.general.ufw:

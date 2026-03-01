@@ -7,3 +7,10 @@ auto_reboot: false
 
 # E-mail para notificações de atualização automática (vazio = desabilitado)
 notify_email: ""
+
+# Pacotes que NUNCA devem ser atualizados automaticamente
+unattended_upgrades_blacklist:
+  - "linux-image"
+  - "linux-headers"
+  - "systemd"
+  - "openssh-server"

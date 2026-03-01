@@ -1,0 +1,4 @@
+---
+- name: reload auditd
+  ansible.builtin.command: augenrules --load
+  tags: [auditd]

@@ -6,3 +6,6 @@ admin_shell: /bin/bash
 
 # Destino do arquivo sudoers no sistema gerenciado
 sudoers_dest: /etc/sudoers.d/admin-nopasswd
+
+# SSH public key for admin user - mova para vault.yml em produção
+admin_ssh_key: ""

@@ -23,6 +23,16 @@ Protocol 2
 # Desabilita login direto do root
 PermitRootLogin {{ ssh_permit_root_login }}
 
+# Restringe o acesso SSH aos membros do grupo especificado
+AllowGroups {{ ssh_allow_groups }}
+
+# Exige autenticação por chave pública como único método
+AuthenticationMethods publickey
+PubkeyAuthentication yes
+
+# Desabilita exibição do MOTD após login
+PrintMotd no
+
 # Desabilita autenticação por senha — apenas chave pública é aceita
 PasswordAuthentication {{ ssh_password_auth }}
 

@@ -18,6 +18,9 @@ ssh_password_auth: "no"
 # Recomendado: "no" — acessar via usuário admin e usar sudo
 ssh_permit_root_login: "no"
 
+# Grupos com permissão de acesso SSH (AllowGroups)
+ssh_allow_groups: "ssh-access"
+
 # ==============================================================================
 # Usuário administrador
 # ==============================================================================
@@ -68,8 +71,8 @@ notify_email: ""
 # ==============================================================================
 
 # Portas permitidas no firewall (lista)
+# NOTA: porta SSH é gerida pela regra dedicada com rate limiting
 allowed_ports:
-  - 22
   - 80
   - 443
 
@@ -77,12 +80,23 @@ allowed_ports:
 # Útil para liberar acesso de IPs de confiança além das regras padrão
 firewall_allowed_ips: []
 
+# Named network CIDRs
+networks:
+  lan:
+    cidr: "192.168.1.0/24"
+
+# Restringir SSH apenas à LAN
+ssh_restrict_to_lan: true
+
 # ==============================================================================
 # Fail2ban
 # ==============================================================================
 
-# Tempo de banimento em segundos (padrão: 1 hora)
-f2b_bantime: 3600
+# Tempo de banimento em segundos (1 semana)
+f2b_bantime: 604800
+
+# IPs/redes excluídos do ban (loopback + LAN)
+f2b_ignoreip: "127.0.0.1/8 ::1 192.168.1.0/24"
 
 # Janela de tempo para contagem de falhas em segundos (padrão: 10 minutos)
 f2b_findtime: 600

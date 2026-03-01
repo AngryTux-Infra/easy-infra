@@ -13,6 +13,9 @@ Unattended-Upgrade::Allowed-Origins {
 
 // Pacotes que NUNCA devem ser atualizados automaticamente
 Unattended-Upgrade::Package-Blacklist {
+{% for pkg in unattended_upgrades_blacklist %}
+    "{{ pkg }}";
+{% endfor %}
 };
 
 // Remover dependências não utilizadas após a atualização

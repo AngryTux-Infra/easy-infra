@@ -41,3 +41,71 @@
     mode: "0750"
     owner: root
     group: root
+
+- name: Implantar configuração do NTP (timesyncd)
+  template:
+    src: timesyncd.conf.j2
+    dest: /etc/systemd/timesyncd.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart timesyncd
+  tags: [base, ntp]
+
+- name: Atualizar /etc/hosts com 127.0.1.1 e hostname
+  lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1'
+    line: "127.0.1.1 {{ server_hostname }}"
+    state: present
+  when: server_hostname != ""
+  tags: [base, hostname]
+
+- name: Verificar se swap já existe
+  stat:
+    path: "{{ swap_file }}"
+  register: swap_stat
+  when: swap_enabled
+  tags: [base, swap]
+
+- name: Criar arquivo de swap
+  command: fallocate -l {{ swap_size }} {{ swap_file }}
+  when: swap_enabled and not swap_stat.stat.exists
+  tags: [base, swap]
+
+- name: Definir permissões do arquivo de swap
+  file:
+    path: "{{ swap_file }}"
+    mode: "0600"
+    owner: root
+    group: root
+  when: swap_enabled
+  tags: [base, swap]
+
+- name: Formatar arquivo de swap
+  command: mkswap {{ swap_file }}
+  when: swap_enabled and not swap_stat.stat.exists
+  tags: [base, swap]
+
+- name: Ativar swap
+  command: swapon {{ swap_file }}
+  when: swap_enabled and not swap_stat.stat.exists
+  tags: [base, swap]
+
+- name: Adicionar swap ao /etc/fstab
+  lineinfile:
+    path: /etc/fstab
+    regexp: '^{{ swap_file }}'
+    line: "{{ swap_file }} none swap sw 0 0"
+    state: present
+  when: swap_enabled
+  tags: [base, swap]
+
+- name: Configurar swappiness via sysctl
+  sysctl:
+    name: vm.swappiness
+    value: "{{ swap_swappiness }}"
+    state: present
+    reload: true
+  when: swap_enabled
+  tags: [base, swap]

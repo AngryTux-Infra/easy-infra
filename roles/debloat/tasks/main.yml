@@ -1,0 +1,29 @@
+---
+# roles/debloat/tasks/main.yml — Remoção de pacotes e serviços desnecessários
+
+- name: Parar e desabilitar serviços desnecessários
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop: "{{ debloat_services_disable }}"
+  failed_when: false
+  tags: [debloat, system]
+
+- name: Remover pacotes desnecessários (purge)
+  ansible.builtin.apt:
+    name: "{{ debloat_packages_purge }}"
+    state: absent
+    purge: true
+  tags: [debloat, system]
+
+- name: Remover dependências não utilizadas
+  ansible.builtin.apt:
+    autoremove: true
+    purge: true
+  tags: [debloat, system]
+
+- name: Limpar cache do apt
+  ansible.builtin.apt:
+    autoclean: true
+  tags: [debloat, system]

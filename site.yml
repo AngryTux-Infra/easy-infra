@@ -3,10 +3,13 @@
   hosts: all
   become: true
   roles:
+    - { role: etckeeper, tags: ['etckeeper'] }
     - { role: base, tags: ['base'] }
+    - { role: debloat, tags: ['debloat'] }
     - { role: ssh, tags: ['ssh'] }
     - { role: firewall, tags: ['firewall'] }
     - { role: users, tags: ['users'] }
     - { role: fail2ban, tags: ['fail2ban'] }
+    - { role: auditd, tags: ['auditd'] }
     - { role: updates, tags: ['updates'] }
     - { role: monitoring, tags: ['monitoring'] }

@@ -28,3 +28,6 @@ ssh_client_alive_count_max: 2
 
 # Caminho do banner SSH no servidor
 ssh_banner_path: /etc/ssh/banner
+
+# Grupos com permissão de acesso SSH (AllowGroups)
+ssh_allow_groups: "ssh-access"

@@ -1,0 +1,12 @@
+---
+# roles/auditd/defaults/main.yml — Valores padrão para a role auditd
+
+# Habilitar auditoria do sistema
+auditd_enabled: true
+
+# Regras de auditoria
+auditd_rules:
+  - "-w /var/log/auth.log -p wa -k ssh_logins"
+  - "-w /etc/sudoers -p wa -k sudo_commands"
+  - "-w /etc/sudoers.d/ -p wa -k sudo_commands"
+  - "-w /etc/ -p wa -k etc_changes"

@@ -1,0 +1,35 @@
+---
+# roles/debloat/defaults/main.yml — Valores padrão para a role debloat
+
+# Habilitar remoção de pacotes desnecessários
+debloat_enabled: true
+
+# Pacotes a serem removidos (purge)
+debloat_packages_purge:
+  # Ferramentas de relatório
+  - tasksel
+  - tasksel-data
+  - installation-report
+  - popularity-contest
+  - reportbug
+  # Mail (desnecessário em servidor gerenciado por automação)
+  - exim4
+  - exim4-base
+  - exim4-config
+  - exim4-daemon-light
+  - bsd-mailx
+  # Bluetooth/wireless (servidor não tem wireless)
+  - bluetooth
+  - bluez
+  # Serviços desnecessários em servidor
+  - cups
+  - avahi-daemon
+  - ModemManager
+
+# Serviços a parar e desabilitar
+debloat_services_disable:
+  - bluetooth
+  - cups
+  - avahi-daemon
+  - ModemManager
+  - wpa_supplicant

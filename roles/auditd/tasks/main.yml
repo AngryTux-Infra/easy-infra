@@ -1,0 +1,26 @@
+---
+# roles/auditd/tasks/main.yml — Instalação e configuração do auditd
+
+- name: Instalar auditd
+  ansible.builtin.apt:
+    name: auditd
+    state: present
+    update_cache: true
+  tags: [auditd, security]
+
+- name: Deploy regras de auditoria
+  ansible.builtin.template:
+    src: homelab.rules.j2
+    dest: /etc/audit/rules.d/homelab.rules
+    owner: root
+    group: root
+    mode: "0640"
+  notify: reload auditd
+  tags: [auditd, security]
+
+- name: Habilitar e iniciar auditd
+  ansible.builtin.systemd:
+    name: auditd
+    enabled: true
+    state: started
+  tags: [auditd, security]

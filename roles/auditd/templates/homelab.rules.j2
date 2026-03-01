@@ -1,0 +1,6 @@
+# Managed by Ansible (easy-infra) - do not edit manually
+# Regras de auditoria para monitoramento de segurança do servidor
+
+{% for rule in auditd_rules %}
+{{ rule }}
+{% endfor %}

@@ -9,3 +9,11 @@ allowed_ports: []
 # IPs ou redes com acesso irrestrito ao firewall
 # Exemplo: ["192.168.1.0/24", "10.0.0.5"]
 firewall_allowed_ips: []
+
+# Named network CIDRs
+networks:
+  lan:
+    cidr: "192.168.1.0/24"
+
+# Restringir SSH apenas à LAN
+ssh_restrict_to_lan: true

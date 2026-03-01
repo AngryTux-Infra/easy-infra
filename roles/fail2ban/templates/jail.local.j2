@@ -9,6 +9,9 @@
 # Duração do ban (em segundos). Valores negativos = ban permanente.
 bantime  = {{ f2b_bantime }}
 
+# IPs/redes excluídos do ban (nunca serão banidos pelo fail2ban).
+ignoreip = {{ f2b_ignoreip }}
+
 # Janela de tempo na qual as tentativas são contadas (em segundos).
 findtime = {{ f2b_findtime }}
 

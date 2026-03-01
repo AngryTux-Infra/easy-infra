@@ -1,0 +1,11 @@
+---
+# roles/etckeeper/defaults/main.yml — Valores padrão para a role etckeeper
+
+# Habilitar versionamento de /etc
+etckeeper_enabled: true
+
+# Sistema de controle de versão usado pelo etckeeper
+etckeeper_vcs: git
+
+# Mensagem do commit baseline inicial
+etckeeper_baseline_message: "baseline: initial server state"

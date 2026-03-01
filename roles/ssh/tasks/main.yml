@@ -8,6 +8,19 @@
     update_cache: true
     cache_valid_time: 3600
 
+- name: Criar o grupo ssh-access para controle de acesso SSH
+  ansible.builtin.group:
+    name: "{{ ssh_allow_groups }}"
+    state: present
+  tags: [ssh, security]
+
+- name: Adicionar {{ admin_user }} ao grupo {{ ssh_allow_groups }}
+  ansible.builtin.user:
+    name: "{{ admin_user }}"
+    groups: "{{ ssh_allow_groups }}"
+    append: true
+  tags: [ssh, security]
+
 - name: Fazer deploy do sshd_config a partir do template
   ansible.builtin.template:
     src: sshd_config.j2

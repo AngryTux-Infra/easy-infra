@@ -13,3 +13,17 @@ base_packages:
   - jq
   - locales
   - systemd-timesyncd
+
+# Swap configuration
+swap_enabled: true
+swap_size: "1G"
+swap_swappiness: 10
+swap_file: /swapfile
+
+# NTP servers
+ntp_servers:
+  - "0.debian.pool.ntp.org"
+  - "1.debian.pool.ntp.org"
+ntp_fallback_servers:
+  - "2.debian.pool.ntp.org"
+  - "3.debian.pool.ntp.org"
