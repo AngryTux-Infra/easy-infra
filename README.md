@@ -24,13 +24,18 @@ ansible-playbook site.yml --limit web01
 
 | Role | O que faz | Tag |
 |------|-----------|-----|
-| `base` | Hostname, timezone, locale, NTP, pacotes essenciais | `base` |
-| `ssh` | Hardening SSH — key-only, porta customizável, criptografia moderna | `ssh` |
-| `firewall` | UFW deny-by-default, rate limiting SSH, portas/IPs configuráveis | `firewall` |
-| `users` | Usuário admin, sudo sem senha, authorized_keys | `users` |
-| `fail2ban` | Proteção brute-force SSH + jail recidive (ban progressivo) | `fail2ban` |
+| `etckeeper` | Versionamento do `/etc` com git — audit trail de configs | `etckeeper` |
+| `base` | Hostname, timezone, locale, NTP, swap, pacotes essenciais | `base` |
+| `debloat` | Remove pacotes e serviços desnecessários (bluetooth, cups, avahi) | `debloat` |
+| `ssh` | Hardening SSH — key-only, porta customizável, criptografia moderna, transição de porta segura | `ssh` |
+| `firewall` | UFW deny-by-default, rate limiting SSH, limpeza de regras legadas, portas/IPs configuráveis | `firewall` |
+| `users` | Usuário admin, sudo sem senha, authorized_keys, root locked | `users` |
+| `fail2ban` | Proteção brute-force SSH + jail recidive (ban progressivo, 1 semana) | `fail2ban` |
+| `auditd` | Auditoria do sistema — regras para SSH, sudo e alterações em /etc | `auditd` |
 | `updates` | unattended-upgrades para security patches automáticos | `updates` |
-| `monitoring` | sysstat, logwatch, comando `server-health` | `monitoring` |
+| `monitoring` | sysstat, logwatch, comando `server-health` com fallback journalctl | `monitoring` |
+
+Ordem de execução: etckeeper → base → debloat → ssh → firewall → users → fail2ban → auditd → updates → monitoring
 
 ## Quick start
 
@@ -48,7 +53,12 @@ ansible all -m ping
 # Aplique (dry-run primeiro)
 ansible-playbook site.yml --check --diff
 ansible-playbook site.yml
+
+# Usar inventário de teste
+ansible-playbook site.yml -i inventories/test/hosts.yml
 ```
+
+> **Nota sobre transição de porta SSH:** A role `ssh` lida automaticamente com a mudança de porta. Se o servidor está na porta 22 e `ssh_port` está configurado para 2222, o playbook faz a transição sem perder conectividade (flush handlers → wait_for → set_fact → reset_connection).
 
 ## Inventário
 
@@ -100,11 +110,12 @@ server_hostname: ""              # vazio = não altera
 server_timezone: UTC
 
 # Firewall
-allowed_ports: []                # ["80/tcp", "443/tcp"]
+allowed_ports: [80, 443]         # Portas adicionais (SSH é gerido separadamente)
 firewall_allowed_ips: []         # ["10.0.0.0/8"]
+ssh_restrict_to_lan: true        # Restringe SSH à LAN
 
 # Fail2ban
-f2b_bantime: 3600
+f2b_bantime: 604800              # 1 semana
 f2b_maxretry: 5
 
 # Updates
@@ -119,22 +130,20 @@ easy-infra/
 ├── ansible.cfg
 ├── site.yml                         # Playbook principal
 ├── inventories/
-│   ├── production/
-│   │   ├── hosts.yml
-│   │   └── group_vars/all.yml
-│   └── staging/
-│       ├── hosts.yml
-│       └── group_vars/all.yml
+│   ├── production/                  # Servidores de produção
+│   ├── staging/                     # Ambiente de staging
+│   └── test/                        # Servidor de teste (homelab)
 ├── roles/
+│   ├── etckeeper/                   # Versionamento /etc com git
 │   ├── base/                        # Hostname, timezone, pacotes
-│   ├── ssh/                         # Hardening SSH (ADR #5)
-│   ├── firewall/                    # UFW
-│   ├── users/                       # Admin user, sudo, keys
+│   ├── debloat/                     # Remoção de bloatware
+│   ├── ssh/                         # Hardening SSH + transição de porta
+│   ├── firewall/                    # UFW + limpeza de regras legadas
+│   ├── users/                       # Admin user, sudo, keys, root lock
 │   ├── fail2ban/                    # Brute-force protection
+│   ├── auditd/                      # Auditoria do sistema
 │   ├── updates/                     # Unattended-upgrades
-│   └── monitoring/                  # sysstat, server-health
-├── scripts/                         # Codebase bash original (referência)
-├── configs/                         # Configs bash originais (referência)
+│   └── monitoring/                  # sysstat, logwatch, server-health
 ├── docs/                            # Convenções agile-issues
 ├── guides/                          # Guias do workflow
 └── templates/                       # Templates de issues
@@ -144,24 +153,26 @@ easy-infra/
 
 Todos os módulos Ansible são nativamente idempotentes:
 
-- `apt` — instala apenas se não presente
+- `apt` — instala apenas se não presente, `cache_valid_time` evita updates desnecessários
 - `template` — aplica apenas se conteúdo mudou, com `validate` antes
-- `ufw` — não duplica regras existentes
+- `ufw` — não duplica regras existentes, limpa regras legadas automaticamente
 - `user` — não recria usuário existente
 - `authorized_key` — não duplica chaves
 - Handlers — restart apenas quando notificados (config mudou)
+- SSH port transition — `flush_handlers` + `reset_connection` apenas quando porta muda
 
 Reaplicar em servidor já configurado: **zero mudanças, zero risco.**
+Testado com 4 execuções consecutivas em Debian 13: `ok=57, changed=0` a partir da 2a execução.
 
 ## Compatibilidade
 
-- Debian 12+
+- Debian 12+ (testado em Debian 13 trixie)
 - Ubuntu 22.04+
 - Ansible 2.14+ no control node
 
 ## Histórico
 
-Este projeto começou como bash scripts (preservados em `scripts/` como referência) e foi migrado para Ansible após decisão arquitetural (ADR #2) para suportar gestão de N servidores com idempotência nativa.
+Este projeto começou como bash scripts e foi migrado para Ansible após decisão arquitetural (ADR #2) para suportar gestão de N servidores com idempotência nativa. Os scripts legados foram removidos após a migração completa.
 
 ## Licença
 
