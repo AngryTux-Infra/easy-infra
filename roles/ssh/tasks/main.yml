@@ -45,3 +45,24 @@
     name: "{{ 'sshd' if ansible_service_mgr == 'systemd' and ansible_facts.services is defined and 'sshd.service' in ansible_facts.services else 'ssh' }}"
     enabled: true
     state: started
+
+# Port transition: flush handlers now so sshd restarts before we proceed.
+# Then wait for the new port and tell Ansible to reconnect on it.
+- name: Flush handlers para reiniciar sshd imediatamente
+  ansible.builtin.meta: flush_handlers
+
+- name: Aguardar nova porta SSH ficar disponível
+  ansible.builtin.wait_for:
+    host: "{{ ansible_host }}"
+    port: "{{ ssh_port }}"
+    delay: 2
+    timeout: 30
+  delegate_to: localhost
+  become: false
+
+- name: Atualizar ansible_port para a nova porta SSH
+  ansible.builtin.set_fact:
+    ansible_port: "{{ ssh_port }}"
+
+- name: Resetar conexão SSH para usar a nova porta
+  ansible.builtin.meta: reset_connection

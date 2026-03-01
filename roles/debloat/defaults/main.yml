@@ -12,12 +12,13 @@ debloat_packages_purge:
   - installation-report
   - popularity-contest
   - reportbug
-  # Mail (desnecessário em servidor gerenciado por automação)
-  - exim4
-  - exim4-base
-  - exim4-config
-  - exim4-daemon-light
-  - bsd-mailx
+  # Mail — mantidos porque logwatch (role monitoring) depende de MTA
+  # Se remover logwatch do monitoring, descomente estas linhas:
+  # - exim4
+  # - exim4-base
+  # - exim4-config
+  # - exim4-daemon-light
+  # - bsd-mailx
   # Bluetooth/wireless (servidor não tem wireless)
   - bluetooth
   - bluez

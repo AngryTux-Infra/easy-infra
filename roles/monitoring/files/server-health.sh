@@ -190,8 +190,13 @@ if [[ -n "${AUTH_LOG}" ]]; then
     tail -n 5 "${AUTH_LOG}" | while IFS= read -r entry; do
         printf "  %s\n" "${entry}"
     done
+elif command -v journalctl &>/dev/null; then
+    printf "  Fonte: journalctl (systemd)\n\n"
+    journalctl -t sshd -n 5 --no-pager -q 2>/dev/null | while IFS= read -r entry; do
+        printf "  %s\n" "${entry}"
+    done
 else
-    _warn "Arquivo auth.log não encontrado ou sem permissão de leitura"
+    _warn "Arquivo auth.log não encontrado e journalctl não disponível"
 fi
 
 # ------------------------------------------------------------------------------

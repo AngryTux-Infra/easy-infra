@@ -9,6 +9,7 @@
       - logwatch
     state: present
     update_cache: true
+    cache_valid_time: 3600
 
 - name: Habilitar coleta de dados do sysstat
   ansible.builtin.lineinfile:
