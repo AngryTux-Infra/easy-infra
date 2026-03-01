@@ -58,7 +58,7 @@ ansible-playbook site.yml
 ansible-playbook site.yml -i inventories/test/hosts.yml
 ```
 
-> **Nota sobre transição de porta SSH:** A role `ssh` lida automaticamente com a mudança de porta. Se o servidor está na porta 22 e `ssh_port` está configurado para 2222, o playbook faz a transição sem perder conectividade (flush handlers → wait_for → set_fact → reset_connection).
+> **Nota sobre transição de porta SSH:** A role `ssh` lida automaticamente com a mudança de porta. Se o servidor está na porta 22 e `ssh.port` está configurado para 2222, o playbook faz a transição sem perder conectividade (flush handlers → wait_for → set_fact → reset_connection).
 
 ## Inventário
 
@@ -84,7 +84,7 @@ all:
 inventories/production/
 ├── hosts.yml
 ├── group_vars/
-│   ├── all.yml            # Defaults globais (ssh_port, admin_user, etc)
+│   ├── all.yml            # Defaults globais (ssh.*, user.*, access.*)
 │   └── webservers.yml     # Portas 80/443 para webservers
 └── host_vars/
     └── web01.yml           # Overrides específicos do host
@@ -96,27 +96,34 @@ Hierarquia de precedência: `role defaults → group_vars/all → group_vars/<gr
 
 ```yaml
 # SSH
-ssh_port: 2222
-ssh_password_auth: false
-ssh_permit_root_login: false
+ssh:
+  port: 2222
+  password_auth: "no"
+  permit_root_login: "no"
+  allow_groups: "ssh-access"
 
 # Usuário admin
-admin_user: sysadmin
-admin_groups: [sudo, adm]
-admin_ssh_key: ""               # ssh-ed25519 AAAA...
+user:
+  admin:
+    name: feuser
+    home: /home/feuser
+    groups: [sudo, adm]
+    ssh:
+      authorized_key: ""         # ssh-ed25519 AAAA...
 
 # Servidor
 server_hostname: ""              # vazio = não altera
 server_timezone: UTC
 
-# Firewall
-allowed_ports: [80, 443]         # Portas adicionais (SSH é gerido separadamente)
-firewall_allowed_ips: []         # ["10.0.0.0/8"]
-ssh_restrict_to_lan: true        # Restringe SSH à LAN
-
-# Fail2ban
-f2b_bantime: 604800              # 1 semana
-f2b_maxretry: 5
+# Access (firewall/fail2ban)
+access:
+  firewall:
+    allowed_ports: [80, 443]     # Portas adicionais (SSH é gerido separadamente)
+    allowed_ips: []              # ["10.0.0.0/8"]
+    ssh_restrict_to_lan: true    # Restringe SSH à LAN
+  fail2ban:
+    bantime: 604800              # 1 semana
+    maxretry: 5
 
 # Updates
 auto_reboot: false

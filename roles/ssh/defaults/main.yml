@@ -2,32 +2,30 @@
 # roles/ssh/defaults/main.yml — Valores padrão para a role ssh
 # Sobrescreva em group_vars ou host_vars conforme necessário
 
-# Porta do servidor SSH
-ssh_port: 2222
+# Namespace de variáveis para SSH
+ssh:
+  port: 2222
+  password_auth: "no"
+  permit_root_login: "no"
+  max_auth_tries: 3
+  max_sessions: 5
+  login_grace_time: 30
+  client_alive_interval: 180
+  client_alive_count_max: 2
+  banner_path: /etc/ssh/banner
+  allow_groups: "ssh-access"
 
-# Permitir autenticação por senha (yes/no)
-ssh_password_auth: "no"
+# Compatibilidade com variáveis legadas (flat)
+ssh_port: "{{ ssh.port | default(2222) }}"
+ssh_password_auth: "{{ ssh.password_auth | default('no', true) }}"
+ssh_permit_root_login: "{{ ssh.permit_root_login | default('no', true) }}"
+ssh_max_auth_tries: "{{ ssh.max_auth_tries | default(3) }}"
+ssh_max_sessions: "{{ ssh.max_sessions | default(5) }}"
+ssh_login_grace_time: "{{ ssh.login_grace_time | default(30) }}"
+ssh_client_alive_interval: "{{ ssh.client_alive_interval | default(180) }}"
+ssh_client_alive_count_max: "{{ ssh.client_alive_count_max | default(2) }}"
+ssh_banner_path: "{{ ssh.banner_path | default('/etc/ssh/banner', true) }}"
+ssh_allow_groups: "{{ ssh.allow_groups | default('ssh-access', true) }}"
 
-# Permitir login direto do root (yes/no)
-ssh_permit_root_login: "no"
-
-# Número máximo de tentativas de autenticação por conexão
-ssh_max_auth_tries: 3
-
-# Número máximo de sessões simultâneas por conexão
-ssh_max_sessions: 5
-
-# Tempo máximo para completar a autenticação (segundos)
-ssh_login_grace_time: 30
-
-# Intervalo de keepalive (segundos)
-ssh_client_alive_interval: 180
-
-# Quantidade de keepalives sem resposta antes de encerrar a sessão
-ssh_client_alive_count_max: 2
-
-# Caminho do banner SSH no servidor
-ssh_banner_path: /etc/ssh/banner
-
-# Grupos com permissão de acesso SSH (AllowGroups)
-ssh_allow_groups: "ssh-access"
+# Usuário admin para membership no grupo de acesso SSH
+admin_user: "{{ user.admin.name | default('feuser', true) }}"

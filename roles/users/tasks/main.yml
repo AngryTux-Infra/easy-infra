@@ -13,6 +13,77 @@
     comment: "Admin user managed by easy-infra"
     state: present
 
+- name: Garantir diretório .ssh do admin
+  ansible.builtin.file:
+    path: "{{ admin_home }}/.ssh"
+    state: directory
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    mode: "0700"
+  tags: [users, ssh]
+
+- name: Gerar par de chaves SSH do usuário admin no servidor
+  ansible.builtin.command:
+    argv:
+      - ssh-keygen
+      - -q
+      - -t
+      - "{{ admin_ssh_key_type }}"
+      - -C
+      - "{{ admin_ssh_key_comment }}"
+      - -N
+      - ""
+      - -f
+      - "{{ admin_ssh_key_path }}"
+  args:
+    creates: "{{ admin_ssh_key_path }}"
+  become: true
+  become_user: "{{ admin_user }}"
+  when: admin_generate_ssh_keypair | bool
+  tags: [users, ssh]
+
+- name: Garantir permissões da chave privada do admin
+  ansible.builtin.file:
+    path: "{{ admin_ssh_key_path }}"
+    state: file
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    mode: "0600"
+  when: admin_generate_ssh_keypair | bool
+  tags: [users, ssh]
+
+- name: Garantir permissões da chave pública do admin
+  ansible.builtin.file:
+    path: "{{ admin_ssh_key_path }}.pub"
+    state: file
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    mode: "0644"
+  when: admin_generate_ssh_keypair | bool
+  tags: [users, ssh]
+
+- name: Garantir diretório local para exportar .pub gerada
+  ansible.builtin.file:
+    path: "{{ admin_pubkey_export_dir }}"
+    state: directory
+    mode: "0750"
+  delegate_to: localhost
+  become: false
+  when:
+    - admin_generate_ssh_keypair | bool
+    - admin_export_generated_pubkey | bool
+  tags: [users, ssh]
+
+- name: Exportar .pub gerada para a máquina de controle
+  ansible.builtin.fetch:
+    src: "{{ admin_ssh_key_path }}.pub"
+    dest: "{{ admin_pubkey_export_dir }}/{{ inventory_hostname }}-{{ admin_user }}.pub"
+    flat: true
+  when:
+    - admin_generate_ssh_keypair | bool
+    - admin_export_generated_pubkey | bool
+  tags: [users, ssh]
+
 - name: Deploy SSH key for admin user (exclusive)
   ansible.builtin.authorized_key:
     user: "{{ admin_user }}"

@@ -2,18 +2,21 @@
 # roles/firewall/defaults/main.yml — Defaults da role firewall
 # Sobrescreva em group_vars ou host_vars conforme necessário
 
-# Portas adicionais a liberar no firewall (além da porta SSH)
-# Exemplo: [80, 443, 8080]
-allowed_ports: []
+# Namespace de variáveis para controle de acesso/rede
+access:
+  firewall:
+    allowed_ports: []
+    allowed_ips: []
+    networks:
+      lan:
+        cidr: "192.168.1.0/24"
+    ssh_restrict_to_lan: true
 
-# IPs ou redes com acesso irrestrito ao firewall
-# Exemplo: ["192.168.1.0/24", "10.0.0.5"]
-firewall_allowed_ips: []
+# Compatibilidade com variáveis legadas (flat)
+allowed_ports: "{{ access.firewall.allowed_ports | default([]) }}"
+firewall_allowed_ips: "{{ access.firewall.allowed_ips | default([]) }}"
+networks: "{{ access.firewall.networks | default({'lan': {'cidr': '192.168.1.0/24'}}) }}"
+ssh_restrict_to_lan: "{{ access.firewall.ssh_restrict_to_lan | default(true) }}"
 
-# Named network CIDRs
-networks:
-  lan:
-    cidr: "192.168.1.0/24"
-
-# Restringir SSH apenas à LAN
-ssh_restrict_to_lan: true
+# Porta SSH vinda do namespace ssh
+ssh_port: "{{ ssh.port | default(2222) }}"

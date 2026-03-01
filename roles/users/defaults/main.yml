@@ -1,11 +1,42 @@
 ---
 # roles/users/defaults/main.yml
 
-# Shell padrão do usuário administrador
-admin_shell: /bin/bash
+# Namespace de variáveis para usuário/admin
+user:
+  admin:
+    name: feuser
+    home: /home/feuser
+    groups:
+      - sudo
+      - adm
+    shell: /bin/bash
+    ssh:
+      authorized_key: ""
+      generate_keypair: true
+      key_type: ed25519
+      key_path: ""
+      key_comment: ""
+      export_generated_pubkey: true
+      pubkey_export_dir: "{{ lookup('ansible.builtin.env', 'PWD') }}/artifacts/admin-pubkeys"
+
+# Compatibilidade com variáveis legadas (flat)
+admin_user: "{{ user.admin.name | default('feuser', true) }}"
+admin_home: "{{ user.admin.home | default('/home/' ~ admin_user, true) }}"
+admin_groups: "{{ user.admin.groups | default(['sudo', 'adm']) }}"
+admin_shell: "{{ user.admin.shell | default('/bin/bash', true) }}"
 
 # Destino do arquivo sudoers no sistema gerenciado
 sudoers_dest: /etc/sudoers.d/admin-nopasswd
 
 # SSH public key for admin user - mova para vault.yml em produção
-admin_ssh_key: ""
+admin_ssh_key: "{{ user.admin.ssh.authorized_key | default('', true) }}"
+
+# Gera par de chaves SSH do usuário admin no próprio servidor
+admin_generate_ssh_keypair: "{{ user.admin.ssh.generate_keypair | default(true) }}"
+admin_ssh_key_type: "{{ user.admin.ssh.key_type | default('ed25519', true) }}"
+admin_ssh_key_path: "{{ user.admin.ssh.key_path | default(admin_home ~ '/.ssh/id_ed25519', true) }}"
+admin_ssh_key_comment: "{{ user.admin.ssh.key_comment | default(admin_user ~ '@' ~ inventory_hostname, true) }}"
+
+# Exporta a chave pública gerada para a máquina que executou o playbook
+admin_export_generated_pubkey: "{{ user.admin.ssh.export_generated_pubkey | default(true) }}"
+admin_pubkey_export_dir: "{{ user.admin.ssh.pubkey_export_dir | default(lookup('ansible.builtin.env', 'PWD') ~ '/artifacts/admin-pubkeys', true) }}"

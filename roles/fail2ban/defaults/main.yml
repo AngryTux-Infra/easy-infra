@@ -2,17 +2,19 @@
 # roles/fail2ban/defaults/main.yml — Valores padrão para a role fail2ban
 # Sobrescreva em group_vars ou host_vars conforme necessário
 
+# Namespace de variáveis para controle de acesso/fail2ban
+access:
+  fail2ban:
+    bantime: 604800
+    ignoreip: "127.0.0.1/8 ::1"
+    findtime: 600
+    maxretry: 5
+
+# Compatibilidade com variáveis legadas (flat)
+f2b_bantime: "{{ access.fail2ban.bantime | default(604800) }}"
+f2b_ignoreip: "{{ access.fail2ban.ignoreip | default('127.0.0.1/8 ::1', true) }}"
+f2b_findtime: "{{ access.fail2ban.findtime | default(600) }}"
+f2b_maxretry: "{{ access.fail2ban.maxretry | default(5) }}"
+
 # Porta SSH monitorada pelo jail sshd
-ssh_port: 2222
-
-# Duração do ban em segundos (padrão: 1 semana)
-f2b_bantime: 604800
-
-# IPs/redes excluídos do ban (nunca serão banidos)
-f2b_ignoreip: "127.0.0.1/8 ::1"
-
-# Janela de tempo para contagem de falhas em segundos (padrão: 10 minutos)
-f2b_findtime: 600
-
-# Número máximo de tentativas antes do ban
-f2b_maxretry: 5
+ssh_port: "{{ ssh.port | default(2222) }}"

@@ -6,22 +6,25 @@
 # Configurações de SSH
 # ==============================================================================
 
-ssh_port: 2222
-ssh_password_auth: "no"
-ssh_permit_root_login: "no"
-ssh_allow_groups: "ssh-access"
+ssh:
+  port: 2222
+  password_auth: "no"
+  permit_root_login: "no"
+  allow_groups: "ssh-access"
 
 # ==============================================================================
 # Usuário administrador
 # ==============================================================================
 
-admin_user: feuser
-admin_home: /home/feuser
-admin_groups:
-  - sudo
-  - adm
-
-admin_ssh_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDzvCZm39zNAL6i+acOVRHMm9Z7vfMOHWScIV7wbiPEU sh3ll@sh3ll"
+user:
+  admin:
+    name: feuser
+    home: /home/feuser
+    groups:
+      - sudo
+      - adm
+    ssh:
+      authorized_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDzvCZm39zNAL6i+acOVRHMm9Z7vfMOHWScIV7wbiPEU sh3ll@sh3ll"
 
 # ==============================================================================
 # Configurações do servidor
@@ -42,26 +45,25 @@ notify_email: ""
 # Firewall
 # ==============================================================================
 
-allowed_ports:
-  - 80
-  - 443
+access:
+  firewall:
+    allowed_ports:
+      - 80
+      - 443
+    allowed_ips: []
+    networks:
+      lan:
+        cidr: "192.168.1.0/24"
+    ssh_restrict_to_lan: true
 
-firewall_allowed_ips: []
-
-networks:
-  lan:
-    cidr: "192.168.1.0/24"
-
-ssh_restrict_to_lan: true
-
-# ==============================================================================
-# Fail2ban
-# ==============================================================================
-
-f2b_bantime: 604800
-f2b_ignoreip: "127.0.0.1/8 ::1 192.168.1.0/24"
-f2b_findtime: 600
-f2b_maxretry: 5
+  # ==============================================================================
+  # Fail2ban
+  # ==============================================================================
+  fail2ban:
+    bantime: 604800
+    ignoreip: "127.0.0.1/8 ::1 192.168.1.0/24"
+    findtime: 600
+    maxretry: 5
 
 # ==============================================================================
 # APT e pacotes

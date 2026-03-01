@@ -7,35 +7,39 @@
 # Configurações de SSH
 # ==============================================================================
 
-# Porta do servidor SSH
-ssh_port: 2222
+ssh:
+  # Porta do servidor SSH
+  port: 2222
 
-# Permitir autenticação por senha via SSH (yes/no)
-ssh_password_auth: "no"
+  # Permitir autenticação por senha via SSH (yes/no)
+  password_auth: "no"
 
-# Permitir login direto do root via SSH (yes/no)
-ssh_permit_root_login: "no"
+  # Permitir login direto do root via SSH (yes/no)
+  permit_root_login: "no"
 
-# Grupos com permissão de acesso SSH (AllowGroups)
-ssh_allow_groups: "ssh-access"
+  # Grupos com permissão de acesso SSH (AllowGroups)
+  allow_groups: "ssh-access"
 
 # ==============================================================================
 # Usuário administrador
 # ==============================================================================
 
-# Nome do usuário administrador a ser criado no servidor
-admin_user: sysadmin
+user:
+  admin:
+    # Nome do usuário administrador a ser criado no servidor
+    name: sysadmin
 
-# Diretório home do usuário administrador
-admin_home: /home/sysadmin
+    # Diretório home do usuário administrador
+    home: /home/sysadmin
 
-# Grupos adicionais para o usuário administrador
-admin_groups:
-  - sudo
-  - adm
+    # Grupos adicionais para o usuário administrador
+    groups:
+      - sudo
+      - adm
 
-# Chave pública SSH do usuário administrador
-admin_ssh_key: ""
+    ssh:
+      # Chave pública SSH do usuário administrador
+      authorized_key: ""
 
 # ==============================================================================
 # Configurações do servidor
@@ -64,38 +68,41 @@ notify_email: ""
 # Firewall
 # ==============================================================================
 
-# Portas permitidas no firewall (lista)
-# NOTA: porta SSH é gerida pela regra dedicada com rate limiting
-allowed_ports:
-  - 80
-  - 443
+access:
+  firewall:
+    # Portas permitidas no firewall (lista)
+    # NOTA: porta SSH é gerida pela regra dedicada com rate limiting
+    allowed_ports:
+      - 80
+      - 443
 
-# Endereços IP ou redes com acesso irrestrito ao firewall (lista)
-firewall_allowed_ips: []
+    # Endereços IP ou redes com acesso irrestrito ao firewall (lista)
+    allowed_ips: []
 
-# Named network CIDRs
-networks:
-  lan:
-    cidr: "192.168.1.0/24"
+    # Named network CIDRs
+    networks:
+      lan:
+        cidr: "192.168.1.0/24"
 
-# Restringir SSH apenas à LAN
-ssh_restrict_to_lan: true
+    # Restringir SSH apenas à LAN
+    ssh_restrict_to_lan: true
 
-# ==============================================================================
-# Fail2ban
-# ==============================================================================
+  # ==============================================================================
+  # Fail2ban
+  # ==============================================================================
 
-# Tempo de banimento em segundos (1 semana)
-f2b_bantime: 604800
+  fail2ban:
+    # Tempo de banimento em segundos (1 semana)
+    bantime: 604800
 
-# IPs/redes excluídos do ban (loopback + LAN)
-f2b_ignoreip: "127.0.0.1/8 ::1 192.168.1.0/24"
+    # IPs/redes excluídos do ban (loopback + LAN)
+    ignoreip: "127.0.0.1/8 ::1 192.168.1.0/24"
 
-# Janela de tempo para contagem de falhas em segundos
-f2b_findtime: 600
+    # Janela de tempo para contagem de falhas em segundos
+    findtime: 600
 
-# Número máximo de tentativas antes do banimento
-f2b_maxretry: 5
+    # Número máximo de tentativas antes do banimento
+    maxretry: 5
 
 # ==============================================================================
 # APT e pacotes
