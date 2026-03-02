@@ -1,0 +1,20 @@
+---
+# Variáveis globais para ambiente de integração
+
+ssh:
+  port: 2222
+  password_auth: "no"
+  permit_root_login: "no"
+  allow_groups: "ssh-access"
+
+user:
+  admin:
+    name: sysadmin
+    home: /home/sysadmin
+    groups:
+      - sudo
+      - adm
+    ssh:
+      # Para uso com Ansible Vault, defina em inventories/<env>/vault.yml
+      authorized_key: >-
+        {{ vault_user_admin_authorized_key | default('', true) }}

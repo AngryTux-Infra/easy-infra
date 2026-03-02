@@ -58,6 +58,35 @@ ansible-playbook site.yml
 ansible-playbook site.yml -i inventories/test/hosts.yml
 ```
 
+## Segredos com Ansible Vault (por ambiente)
+
+Sem segredos reais no Git: use um arquivo `vault.yml` por ambiente (ignorado por `.gitignore`).
+
+```bash
+# test
+cp inventories/test/vault.example.yml inventories/test/vault.yml
+ansible-vault encrypt inventories/test/vault.yml
+
+# integration
+cp inventories/integration/vault.example.yml inventories/integration/vault.yml
+ansible-vault encrypt inventories/integration/vault.yml
+```
+
+Execução com segredos:
+
+```bash
+ansible-playbook site.yml \
+  -i inventories/test/hosts.yml \
+  --extra-vars "@inventories/test/vault.yml" \
+  --ask-vault-pass
+```
+
+Syntax-check sem decrypt:
+
+```bash
+ansible-playbook site.yml -i inventories/test/hosts.yml --syntax-check
+```
+
 > **Nota sobre transição de porta SSH:** A role `ssh` lida automaticamente com a mudança de porta. Se o servidor está na porta 22 e `ssh.port` está configurado para 2222, o playbook faz a transição sem perder conectividade (flush handlers → wait_for → set_fact → reset_connection).
 
 ## Inventário
@@ -109,7 +138,7 @@ user:
     home: /home/feuser
     groups: [sudo, adm]
     ssh:
-      authorized_key: ""         # ssh-ed25519 AAAA...
+      authorized_key: "{{ vault_user_admin_authorized_key | default('', true) }}"
 
 # Servidor
 server_hostname: ""              # vazio = não altera
@@ -139,6 +168,7 @@ easy-infra/
 ├── inventories/
 │   ├── production/                  # Servidores de produção
 │   ├── staging/                     # Ambiente de staging
+│   ├── integration/                 # Ambiente de integração
 │   └── test/                        # Servidor de teste (homelab)
 ├── roles/
 │   ├── etckeeper/                   # Versionamento /etc com git

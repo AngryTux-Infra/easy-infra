@@ -1,0 +1,3 @@
+---
+# Copie para inventories/integration/vault.yml e criptografe com ansible-vault.
+vault_user_admin_authorized_key: "ssh-ed25519 AAAA... usuario@maquina"
