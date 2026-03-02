@@ -1,0 +1,135 @@
+---
+# roles/security_extra/tasks/main.yml
+
+- name: Validar parâmetros críticos de security_extra
+  ansible.builtin.assert:
+    that:
+      - sec_logrotate_easy_infra_logs_rotate | int >= 1
+      - sec_logrotate_easy_infra_logs_frequency in ['daily', 'weekly', 'monthly']
+      - sec_logrotate_easy_infra_logs_path | trim | length > 0
+    fail_msg: "Variáveis inválidas em security_extra. Revise logrotate e toggles da role."
+  tags: [security_extra, security, sec, safety]
+
+- name: Instalar pacotes de segurança extras
+  ansible.builtin.apt:
+    name: >-
+      {{
+        ([]
+        + (['logrotate'] if sec_logrotate_enabled else [])
+        + (['apparmor', 'apparmor-utils'] if sec_apparmor_enabled else [])
+        + (['aide', 'aide-common'] if sec_aide_enabled else [])
+        + (['rkhunter'] if sec_rkhunter_enabled else [])
+        + (['clamav'] if sec_clamav_enabled else [])
+        + (['clamav-daemon', 'clamav-freshclam'] if (sec_clamav_enabled and sec_clamav_daemon) else [])
+        ) | unique
+      }}
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  when:
+    - sec_logrotate_enabled or sec_apparmor_enabled or sec_aide_enabled or sec_rkhunter_enabled or sec_clamav_enabled
+  tags: [security_extra, security, sec]
+
+- name: Configurar logrotate para logs do easy-infra
+  ansible.builtin.template:
+    src: easy-infra.logrotate.j2
+    dest: /etc/logrotate.d/easy-infra
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - sec_logrotate_enabled
+    - sec_logrotate_easy_infra_logs_enabled
+  tags: [security_extra, security, sec, logrotate]
+
+- name: Habilitar e iniciar AppArmor
+  ansible.builtin.systemd:
+    name: apparmor
+    enabled: true
+    state: started
+  when: sec_apparmor_enabled
+  tags: [security_extra, security, sec, apparmor]
+
+- name: Forçar perfis AppArmor para enforce (opcional)
+  ansible.builtin.command: aa-enforce /etc/apparmor.d/*
+  changed_when: true
+  failed_when: false
+  when:
+    - sec_apparmor_enabled
+    - sec_apparmor_enforce_profiles
+  tags: [security_extra, security, sec, apparmor]
+
+- name: Verificar presença do banco principal do AIDE
+  ansible.builtin.stat:
+    path: /var/lib/aide/aide.db
+  register: sec_aide_db
+  when: sec_aide_enabled
+  tags: [security_extra, security, sec, aide]
+
+- name: Inicializar banco do AIDE quando ausente
+  ansible.builtin.command: aideinit
+  register: sec_aide_init
+  changed_when: sec_aide_init.rc == 0
+  failed_when: false
+  when:
+    - sec_aide_enabled
+    - sec_aide_init_if_missing
+    - not sec_aide_db.stat.exists
+  tags: [security_extra, security, sec, aide]
+
+- name: Promover aide.db.new para aide.db após inicialização
+  ansible.builtin.copy:
+    src: /var/lib/aide/aide.db.new
+    dest: /var/lib/aide/aide.db
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0600"
+  when:
+    - sec_aide_enabled
+    - sec_aide_init_if_missing
+    - not sec_aide_db.stat.exists
+    - sec_aide_init is defined
+    - sec_aide_init.rc == 0
+    - not ansible_check_mode
+  tags: [security_extra, security, sec, aide]
+
+- name: Atualizar base de dados do rkhunter (opcional)
+  ansible.builtin.command: rkhunter --update
+  register: sec_rkhunter_update
+  changed_when: "'No updates' not in (sec_rkhunter_update.stdout | default(''))"
+  failed_when: false
+  when:
+    - sec_rkhunter_enabled
+    - sec_rkhunter_update_database
+  tags: [security_extra, security, sec, rkhunter]
+
+- name: Recriar baseline de propriedades do rkhunter
+  ansible.builtin.command: rkhunter --propupd
+  register: sec_rkhunter_propupd_result
+  changed_when: sec_rkhunter_propupd_result.rc == 0
+  failed_when: false
+  when:
+    - sec_rkhunter_enabled
+    - sec_rkhunter_propupd
+  tags: [security_extra, security, sec, rkhunter]
+
+- name: Habilitar e iniciar clamav-freshclam
+  ansible.builtin.systemd:
+    name: clamav-freshclam
+    enabled: true
+    state: started
+  when:
+    - sec_clamav_enabled
+    - sec_clamav_daemon
+  tags: [security_extra, security, sec, clamav]
+
+- name: Habilitar e iniciar clamav-daemon
+  ansible.builtin.systemd:
+    name: clamav-daemon
+    enabled: true
+    state: started
+  when:
+    - sec_clamav_enabled
+    - sec_clamav_daemon
+  tags: [security_extra, security, sec, clamav]

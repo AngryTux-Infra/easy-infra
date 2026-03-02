@@ -1,0 +1,14 @@
+{{ sec_logrotate_easy_infra_logs_path }} {
+    {{ sec_logrotate_easy_infra_logs_frequency }}
+    rotate {{ sec_logrotate_easy_infra_logs_rotate }}
+{% if sec_logrotate_easy_infra_logs_compress %}
+    compress
+{% endif %}
+{% if sec_logrotate_easy_infra_logs_missingok %}
+    missingok
+{% endif %}
+{% if sec_logrotate_easy_infra_logs_notifempty %}
+    notifempty
+{% endif %}
+    create {{ sec_logrotate_easy_infra_logs_create_mode }} {{ sec_logrotate_easy_infra_logs_create_owner }} {{ sec_logrotate_easy_infra_logs_create_group }}
+}
