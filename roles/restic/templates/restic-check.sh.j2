@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+if [[ ! -f "{{ restic_env_file }}" ]]; then
+  echo "Arquivo de ambiente {{ restic_env_file }} nao encontrado." >&2
+  exit 1
+fi
+
+# shellcheck source=/etc/restic/restic.env
+source "{{ restic_env_file }}"
+
+restic check --read-data-subset "{{ restic_check_read_data_subset }}"

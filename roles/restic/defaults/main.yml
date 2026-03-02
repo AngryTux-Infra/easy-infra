@@ -1,0 +1,71 @@
+---
+# roles/restic/defaults/main.yml — Defaults da role restic
+# Sobrescreva em group_vars/host_vars (idealmente com Ansible Vault para segredos)
+
+# Habilita/desabilita a configuração do backup com restic
+restic_enabled: true
+
+# Repositório restic (ex.: /mnt/backups/restic ou s3:s3.amazonaws.com/bucket/path)
+restic_repository: "/var/backups/restic"
+
+# Arquivo com senha do repositório (nunca em plaintext no comando)
+restic_password_file: /etc/restic/password
+
+# Conteúdo opcional da senha (recomendado usar vault).
+# Se vazio, a role NÃO sobrescreve o arquivo; ele deve existir no host.
+restic_password: ""
+
+# Variáveis extras de ambiente para backends remotos (AWS_ACCESS_KEY_ID, etc.)
+restic_environment: {}
+
+# Fontes do backup
+restic_backup_paths:
+  - /etc
+  - /home
+
+# Exclusões aplicadas ao backup
+restic_backup_excludes:
+  - /home/*/.cache
+  - /var/cache
+  - /var/tmp
+  - /tmp
+  - /proc
+  - /sys
+  - /dev
+  - /run
+  - /mnt
+  - /media
+  - /lost+found
+
+# Agenda do backup
+restic_backup_on_calendar: "*-*-* 02:30:00"
+restic_backup_randomized_delay_sec: "30m"
+restic_backup_persistent: true
+
+# Política de retenção (0 desabilita o parâmetro)
+restic_keep_last: 0
+restic_keep_hourly: 0
+restic_keep_daily: 7
+restic_keep_weekly: 4
+restic_keep_monthly: 6
+restic_keep_yearly: 1
+
+# Check periódico do repositório
+restic_check_enabled: true
+restic_check_on_calendar: "Sun *-*-* 04:30:00"
+restic_check_randomized_delay_sec: "45m"
+restic_check_persistent: true
+restic_check_read_data_subset: "1/20"
+
+# Diretórios e unidades
+restic_config_dir: /etc/restic
+restic_scripts_dir: /usr/local/sbin
+restic_log_dir: /var/log/restic
+restic_env_file: /etc/restic/restic.env
+restic_excludes_file: /etc/restic/excludes.txt
+restic_backup_script: /usr/local/sbin/restic-backup.sh
+restic_check_script: /usr/local/sbin/restic-check.sh
+restic_backup_service_name: restic-backup.service
+restic_backup_timer_name: restic-backup.timer
+restic_check_service_name: restic-check.service
+restic_check_timer_name: restic-check.timer

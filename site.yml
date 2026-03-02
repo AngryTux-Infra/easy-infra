@@ -12,4 +12,5 @@
     - { role: fail2ban, tags: ['fail2ban'] }
     - { role: auditd, tags: ['auditd'] }
     - { role: updates, tags: ['updates'] }
+    - { role: restic, tags: ['restic', 'backup'] }
     - { role: monitoring, tags: ['monitoring'] }

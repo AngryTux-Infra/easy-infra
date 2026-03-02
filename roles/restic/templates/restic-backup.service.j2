@@ -1,0 +1,14 @@
+[Unit]
+Description=Restic backup job
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile={{ restic_env_file }}
+ExecStart={{ restic_backup_script }}
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+StandardOutput=append:{{ restic_log_dir }}/backup.log
+StandardError=append:{{ restic_log_dir }}/backup.log
