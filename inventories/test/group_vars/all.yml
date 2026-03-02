@@ -24,7 +24,9 @@ user:
       - sudo
       - adm
     ssh:
-      authorized_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDzvCZm39zNAL6i+acOVRHMm9Z7vfMOHWScIV7wbiPEU sh3ll@sh3ll"
+      # Para uso com Ansible Vault, defina em inventories/<env>/vault.yml
+      authorized_key: >-
+        {{ vault_user_admin_authorized_key | default('', true) }}
 
 # ==============================================================================
 # Configurações do servidor
