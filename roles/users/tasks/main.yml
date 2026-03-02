@@ -88,7 +88,7 @@
   ansible.builtin.authorized_key:
     user: "{{ admin_user }}"
     key: "{{ admin_ssh_key }}"
-    exclusive: true
+    exclusive: "{{ admin_ssh_key_exclusive }}"
     state: present
   when: admin_ssh_key != ""
   tags: [users, ssh]
