@@ -1,19 +1,41 @@
 ---
 # roles/etckeeper/tasks/main.yml — Instalação e configuração do etckeeper
 
-- name: Instalar etckeeper e git
+- name: Instalar etckeeper e backend VCS
   ansible.builtin.apt:
     name:
       - etckeeper
-      - git
+      - "{{ etckeeper_vcs_packages[etckeeper_vcs] | default(etckeeper_vcs) }}"
     state: present
     update_cache: true
+  vars:
+    etckeeper_vcs_packages:
+      git: git
+      hg: mercurial
+      bzr: bzr
+      darcs: darcs
+  tags: [etckeeper, system]
+
+- name: Configurar VCS do etckeeper
+  ansible.builtin.lineinfile:
+    path: /etc/etckeeper/etckeeper.conf
+    regexp: '^VCS='
+    line: "VCS=\"{{ etckeeper_vcs }}\""
+    owner: root
+    group: root
+    mode: "0644"
   tags: [etckeeper, system]
 
 - name: Inicializar etckeeper
   ansible.builtin.command: etckeeper init
   args:
-    creates: /etc/.git
+    creates: "{{ etckeeper_repo_paths[etckeeper_vcs] | default('/etc/.git') }}"
+  vars:
+    etckeeper_repo_paths:
+      git: /etc/.git
+      hg: /etc/.hg
+      bzr: /etc/.bzr
+      darcs: /etc/_darcs
   tags: [etckeeper, system]
 
 - name: Criar commit baseline

@@ -2,13 +2,13 @@
 // Gerado pelo easy-infra (Ansible) — NÃO edite manualmente
 
 // Atualizar lista de pacotes diariamente (1 = habilitado)
-APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Update-Package-Lists "{{ (auto_security_updates | bool) | ternary('1', '0') }}";
 
 // Baixar pacotes atualizáveis automaticamente (1 = habilitado)
-APT::Periodic::Download-Upgradeable-Packages "1";
+APT::Periodic::Download-Upgradeable-Packages "{{ (auto_security_updates | bool) | ternary('1', '0') }}";
 
 // Executar unattended-upgrades diariamente (1 = habilitado)
-APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::Unattended-Upgrade "{{ (auto_security_updates | bool) | ternary('1', '0') }}";
 
 // Remover pacotes obsoletos do cache a cada 7 dias
 APT::Periodic::AutocleanInterval "7";
