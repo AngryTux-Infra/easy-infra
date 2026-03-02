@@ -1,0 +1,8 @@
+---
+- name: Verify firewall role
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Check ufw is installed
+      ansible.builtin.command: ufw --version
+      changed_when: false

@@ -1,0 +1,6 @@
+---
+- name: Converge firewall role
+  hosts: all
+  become: true
+  roles:
+    - role: firewall

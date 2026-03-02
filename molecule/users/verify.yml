@@ -1,0 +1,8 @@
+---
+- name: Verify users role
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Check admin user exists
+      ansible.builtin.command: id admin
+      changed_when: false

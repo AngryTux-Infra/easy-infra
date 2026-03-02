@@ -1,0 +1,50 @@
+---
+dependency:
+  name: galaxy
+
+driver:
+  name: docker
+
+platforms:
+  - name: users-debian12
+    image: geerlingguy/docker-debian12-ansible:bookworm
+    pre_build_image: true
+    privileged: true
+    cgroupns_mode: host
+    command: /sbin/init
+    tmpfs:
+      - /run
+      - /run/lock
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_ROLES_PATH: "${MOLECULE_PROJECT_DIRECTORY}/roles"
+  config_options:
+    defaults:
+      remote_tmp: /tmp/.ansible/tmp
+  inventory:
+    host_vars:
+      users-debian12:
+        ansible_user: root
+        user:
+          admin:
+            name: admin
+            home: /home/admin
+            groups: [sudo, adm]
+            ssh:
+              authorized_key: "ssh-ed25519 AAAA... molecule@test"
+  playbooks:
+    converge: converge.yml
+    verify: verify.yml
+
+scenario:
+  test_sequence:
+    - destroy
+    - create
+    - converge
+    - idempotence
+    - verify
+    - destroy

@@ -1,0 +1,53 @@
+---
+dependency:
+  name: galaxy
+
+driver:
+  name: docker
+
+platforms:
+  - name: firewall-debian12
+    image: geerlingguy/docker-debian12-ansible:bookworm
+    pre_build_image: true
+    privileged: true
+    cgroupns_mode: host
+    command: /sbin/init
+    tmpfs:
+      - /run
+      - /run/lock
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_ROLES_PATH: "${MOLECULE_PROJECT_DIRECTORY}/roles"
+  config_options:
+    defaults:
+      remote_tmp: /tmp/.ansible/tmp
+  inventory:
+    host_vars:
+      firewall-debian12:
+        ansible_user: root
+        ssh:
+          port: 2222
+        access:
+          firewall:
+            allowed_ports: [80, 443]
+            allowed_ips: []
+            networks:
+              lan:
+                cidr: "172.16.0.0/12"
+            ssh_restrict_to_lan: false
+  playbooks:
+    converge: converge.yml
+    verify: verify.yml
+
+scenario:
+  test_sequence:
+    - destroy
+    - create
+    - converge
+    - idempotence
+    - verify
+    - destroy
