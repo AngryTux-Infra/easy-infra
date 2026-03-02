@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v aide.wrapper >/dev/null 2>&1; then
+  AIDE_CMD="aide.wrapper"
+else
+  AIDE_CMD="aide"
+fi
+
+if [ ! -f /var/lib/aide/aide.db ] && [ ! -f /var/lib/aide/aide.db.gz ]; then
+  $AIDE_CMD --init
+  if [ -f /var/lib/aide/aide.db.new ]; then
+    mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+  elif [ -f /var/lib/aide/aide.db.new.gz ]; then
+    mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz
+  fi
+fi
+
+$AIDE_CMD --check

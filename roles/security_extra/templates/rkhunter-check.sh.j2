@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if {{ sec_rkhunter_periodic_update_before_scan | bool | ternary('true', 'false') }}; then
+  rkhunter --update || true
+fi
+
+rkhunter --propupd || true
+rkhunter --check --skip-keypress

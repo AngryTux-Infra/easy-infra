@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mkdir -p "$(dirname "{{ sec_clamav_periodic_log_file }}")"
+
+if systemctl list-unit-files | grep -q '^clamav-freshclam\.service'; then
+  systemctl start clamav-freshclam.service || true
+fi
+
+clamscan -ri \
+  --exclude-dir='^/sys' \
+  --exclude-dir='^/proc' \
+  --exclude-dir='^/dev' \
+  --log="{{ sec_clamav_periodic_log_file }}" \
+  "{{ sec_clamav_periodic_path }}"

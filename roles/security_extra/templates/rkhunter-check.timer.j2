@@ -1,0 +1,10 @@
+[Unit]
+Description=Security Extra - periodic rkhunter scan
+
+[Timer]
+OnCalendar={{ sec_rkhunter_periodic_on_calendar }}
+RandomizedDelaySec={{ sec_timers_randomized_delay_sec }}
+Persistent={{ 'true' if sec_timers_persistent else 'false' }}
+
+[Install]
+WantedBy=timers.target
