@@ -4,3 +4,9 @@
 
 # Destino do script de health-check no servidor
 health_script_dest: /usr/local/bin/server-health
+
+# Destino de e-mail do logwatch; vazio = gerar saída em arquivo local
+monitoring_logwatch_email: "{{ notify_email | default('', true) }}"
+
+# Arquivo usado pelo logwatch quando não há e-mail configurado
+monitoring_logwatch_output_file: /var/log/logwatch.log
