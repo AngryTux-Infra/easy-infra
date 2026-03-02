@@ -110,6 +110,7 @@ user:
     groups: [sudo, adm]
     ssh:
       authorized_key: ""         # ssh-ed25519 AAAA...
+      exclusive: true            # default seguro: remove outras chaves do authorized_keys
 
 # Servidor
 server_hostname: ""              # vazio = não altera
@@ -129,6 +130,8 @@ access:
 auto_reboot: false
 notify_email: ""
 ```
+
+Para manter chaves existentes além da `authorized_key` gerenciada pelo playbook, faça override explícito com `user.admin.ssh.exclusive: false` (ou `admin_ssh_key_exclusive: false` para compatibilidade legada).
 
 ## Estrutura do projeto
 

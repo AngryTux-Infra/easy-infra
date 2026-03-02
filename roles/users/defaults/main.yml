@@ -30,6 +30,7 @@ sudoers_dest: /etc/sudoers.d/admin-nopasswd
 
 # SSH public key for admin user - mova para vault.yml em produção
 admin_ssh_key: "{{ user.admin.ssh.authorized_key | default('', true) }}"
+admin_ssh_key_exclusive: "{{ user.admin.ssh.exclusive | default(true) }}"
 
 # Gera par de chaves SSH do usuário admin no próprio servidor
 admin_generate_ssh_keypair: "{{ user.admin.ssh.generate_keypair | default(true) }}"
