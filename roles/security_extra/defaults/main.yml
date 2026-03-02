@@ -1,0 +1,59 @@
+---
+# roles/security_extra/defaults/main.yml
+
+security_extra:
+  logrotate:
+    enabled: true
+    easy_infra_logs:
+      enabled: true
+      path: /var/log/easy-infra/*.log
+      rotate: 12
+      frequency: weekly
+      compress: true
+      missingok: true
+      notifempty: true
+      create_mode: "0640"
+      create_owner: root
+      create_group: adm
+
+  apparmor:
+    enabled: true
+    enforce_profiles: false
+
+  aide:
+    enabled: true
+    init_if_missing: true
+
+  rkhunter:
+    enabled: true
+    update_database: false
+    propupd: true
+
+  clamav:
+    enabled: false
+    daemon: true
+
+sec_logrotate_enabled: "{{ security_extra.logrotate.enabled | default(true, true) | bool }}"
+sec_logrotate_easy_infra_logs_enabled: "{{ security_extra.logrotate.easy_infra_logs.enabled | default(true, true) | bool }}"
+sec_logrotate_easy_infra_logs_path: "{{ security_extra.logrotate.easy_infra_logs.path | default('/var/log/easy-infra/*.log', true) }}"
+sec_logrotate_easy_infra_logs_rotate: "{{ security_extra.logrotate.easy_infra_logs.rotate | default(12) }}"
+sec_logrotate_easy_infra_logs_frequency: "{{ security_extra.logrotate.easy_infra_logs.frequency | default('weekly', true) }}"
+sec_logrotate_easy_infra_logs_compress: "{{ security_extra.logrotate.easy_infra_logs.compress | default(true, true) | bool }}"
+sec_logrotate_easy_infra_logs_missingok: "{{ security_extra.logrotate.easy_infra_logs.missingok | default(true, true) | bool }}"
+sec_logrotate_easy_infra_logs_notifempty: "{{ security_extra.logrotate.easy_infra_logs.notifempty | default(true, true) | bool }}"
+sec_logrotate_easy_infra_logs_create_mode: "{{ security_extra.logrotate.easy_infra_logs.create_mode | default('0640', true) }}"
+sec_logrotate_easy_infra_logs_create_owner: "{{ security_extra.logrotate.easy_infra_logs.create_owner | default('root', true) }}"
+sec_logrotate_easy_infra_logs_create_group: "{{ security_extra.logrotate.easy_infra_logs.create_group | default('adm', true) }}"
+
+sec_apparmor_enabled: "{{ security_extra.apparmor.enabled | default(true, true) | bool }}"
+sec_apparmor_enforce_profiles: "{{ security_extra.apparmor.enforce_profiles | default(false, true) | bool }}"
+
+sec_aide_enabled: "{{ security_extra.aide.enabled | default(true, true) | bool }}"
+sec_aide_init_if_missing: "{{ security_extra.aide.init_if_missing | default(true, true) | bool }}"
+
+sec_rkhunter_enabled: "{{ security_extra.rkhunter.enabled | default(true, true) | bool }}"
+sec_rkhunter_update_database: "{{ security_extra.rkhunter.update_database | default(false, true) | bool }}"
+sec_rkhunter_propupd: "{{ security_extra.rkhunter.propupd | default(true, true) | bool }}"
+
+sec_clamav_enabled: "{{ security_extra.clamav.enabled | default(false, true) | bool }}"
+sec_clamav_daemon: "{{ security_extra.clamav.daemon | default(true, true) | bool }}"
