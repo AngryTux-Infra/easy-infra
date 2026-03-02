@@ -1,0 +1,17 @@
+# /etc/logwatch/conf/logwatch.conf — Gerenciado pelo Ansible (easy-infra)
+# NÃO edite manualmente.
+
+LogDir = /var/cache/logwatch
+TmpDir = /tmp
+MailFrom = Logwatch
+Range = yesterday
+Detail = Low
+Service = All
+
+{% if monitoring_logwatch_email | string | trim | length > 0 %}
+Output = mail
+MailTo = {{ monitoring_logwatch_email }}
+{% else %}
+Output = file
+Filename = {{ monitoring_logwatch_output_file }}
+{% endif %}

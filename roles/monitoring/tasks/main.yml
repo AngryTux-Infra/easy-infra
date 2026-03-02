@@ -11,6 +11,14 @@
     update_cache: true
     cache_valid_time: 3600
 
+- name: Configurar logwatch (e-mail ou arquivo)
+  ansible.builtin.template:
+    src: logwatch.conf.j2
+    dest: /etc/logwatch/conf/logwatch.conf
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: Habilitar coleta de dados do sysstat
   ansible.builtin.lineinfile:
     path: /etc/default/sysstat

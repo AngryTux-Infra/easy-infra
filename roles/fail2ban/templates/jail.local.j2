@@ -22,8 +22,12 @@ maxretry = {{ f2b_maxretry }}
 # Requer que o UFW esteja habilitado (configurado pela role firewall).
 banaction = ufw
 
-# Envia notificações apenas para o log local (sem MTA configurado por padrão).
-mta = sendmail
+{% if f2b_mta | string | length > 0 %}
+# Define MTA apenas quando explicitamente configurado via variável.
+mta = {{ f2b_mta }}
+{% else %}
+# MTA omitido por padrão (seguro para hosts sem MTA funcional).
+{% endif %}
 
 # Protocolo padrão para os jails que não especificam o próprio.
 protocol = tcp
@@ -67,3 +71,42 @@ findtime  = 86400
 
 # Bane após ser banido 5 vezes por outros jails dentro da janela.
 maxretry  = 5
+
+{% if f2b_jail_nginx_http_auth_enabled | bool %}
+# ==============================================================================
+# Jail opcional: nginx-http-auth — falhas de autenticação HTTP no Nginx
+# ==============================================================================
+
+[nginx-http-auth]
+
+enabled = true
+port    = http,https
+filter  = nginx-http-auth
+logpath = /var/log/nginx/error.log
+{% endif %}
+
+{% if f2b_jail_nginx_botsearch_enabled | bool %}
+# ==============================================================================
+# Jail opcional: nginx-botsearch — varreduras por URLs sensíveis no Nginx
+# ==============================================================================
+
+[nginx-botsearch]
+
+enabled = true
+port    = http,https
+filter  = nginx-botsearch
+logpath = /var/log/nginx/access.log
+{% endif %}
+
+{% if f2b_jail_nginx_badbots_enabled | bool %}
+# ==============================================================================
+# Jail opcional: nginx-badbots — user-agents de bots maliciosos conhecidos
+# ==============================================================================
+
+[nginx-badbots]
+
+enabled = true
+port    = http,https
+filter  = nginx-badbots
+logpath = /var/log/nginx/access.log
+{% endif %}
