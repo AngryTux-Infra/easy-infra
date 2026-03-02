@@ -5,6 +5,9 @@
 # Reinicialização automática após atualizações que exigem reboot
 auto_reboot: false
 
+# Horário de reboot automático quando auto_reboot estiver habilitado
+auto_reboot_time: "02:00"
+
 # E-mail para notificações de atualização automática (vazio = desabilitado)
 notify_email: ""
 

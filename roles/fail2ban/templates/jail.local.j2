@@ -59,8 +59,8 @@ filter    = recidive
 logpath   = /var/log/fail2ban.log
 banaction = ufw
 
-# Ban de 1 semana para reincidentes (604800 segundos).
-bantime   = 604800
+# Ban para reincidentes (parametrizado via defaults/group_vars).
+bantime   = {{ f2b_recidive_bantime }}
 
 # Janela de observação: 1 dia (86400 segundos).
 findtime  = 86400

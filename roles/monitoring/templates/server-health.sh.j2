@@ -1,0 +1,207 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ==============================================================================
+# server-health — Health-check standalone do servidor
+# Instalado em: /usr/local/bin/server-health
+# Uso: server-health
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Configuração de cores com fallback para terminais sem suporte
+# ------------------------------------------------------------------------------
+_setup_colors() {
+    if [[ -t 1 ]] && [[ -n "${TERM:-}" ]] && [[ "${TERM}" != "dumb" ]]; then
+        C_RESET='\033[0m'
+        C_BOLD='\033[1m'
+        C_GREEN='\033[0;32m'
+        C_YELLOW='\033[1;33m'
+        C_RED='\033[0;31m'
+        C_CYAN='\033[0;36m'
+        C_BLUE='\033[0;34m'
+    else
+        C_RESET=''
+        C_BOLD=''
+        C_GREEN=''
+        C_YELLOW=''
+        C_RED=''
+        C_CYAN=''
+        C_BLUE=''
+    fi
+}
+
+_setup_colors
+
+# ------------------------------------------------------------------------------
+# Funções auxiliares de formatação
+# ------------------------------------------------------------------------------
+_header() {
+    local title="${1}"
+    printf "\n${C_BOLD}${C_CYAN}══════════════════════════════════════════${C_RESET}\n"
+    printf "${C_BOLD}${C_CYAN}  %s${C_RESET}\n" "${title}"
+    printf "${C_BOLD}${C_CYAN}══════════════════════════════════════════${C_RESET}\n"
+}
+
+_section() {
+    local title="${1}"
+    printf "\n${C_BOLD}${C_BLUE}── %s${C_RESET}\n" "${title}"
+}
+
+_ok() {
+    printf "  ${C_GREEN}[OK]${C_RESET}  %s\n" "${1}"
+}
+
+_warn() {
+    printf "  ${C_YELLOW}[WARN]${C_RESET} %s\n" "${1}"
+}
+
+_fail() {
+    printf "  ${C_RED}[FAIL]${C_RESET} %s\n" "${1}"
+}
+
+# ------------------------------------------------------------------------------
+# 1. Cabeçalho geral
+# ------------------------------------------------------------------------------
+_header "Server Health Check — $(date '+%Y-%m-%d %H:%M:%S')"
+printf "  Hostname : %s\n" "$(hostname -f 2>/dev/null || hostname)"
+printf "  Kernel   : %s\n" "$(uname -r)"
+
+# ------------------------------------------------------------------------------
+# 2. Uptime
+# ------------------------------------------------------------------------------
+_section "Uptime"
+uptime -p 2>/dev/null || uptime
+
+# ------------------------------------------------------------------------------
+# 3. Uso de CPU — load average
+# ------------------------------------------------------------------------------
+_section "CPU — Load Average"
+
+read -r load1 load5 load15 _ < /proc/loadavg
+cpu_cores="$(nproc 2>/dev/null || grep -c '^processor' /proc/cpuinfo 2>/dev/null || echo 1)"
+
+printf "  Load (1m / 5m / 15m): %s / %s / %s  [cores: %s]\n" \
+    "${load1}" "${load5}" "${load15}" "${cpu_cores}"
+
+# Alerta se load1 > número de núcleos
+if awk -v l="${load1}" -v c="${cpu_cores}" 'BEGIN { exit !(l > c) }'; then
+    _warn "Load average elevado (${load1} > ${cpu_cores} cores)"
+else
+    _ok "Load average normal"
+fi
+
+# ------------------------------------------------------------------------------
+# 4. Uso de memória
+# ------------------------------------------------------------------------------
+_section "Memória"
+free -h
+
+# Extrai percentual de uso para alerta
+mem_total="$(awk '/^MemTotal:/ { print $2 }' /proc/meminfo)"
+mem_available="$(awk '/^MemAvailable:/ { print $2 }' /proc/meminfo)"
+
+if [[ "${mem_total}" -gt 0 ]]; then
+    mem_used_pct=$(( (mem_total - mem_available) * 100 / mem_total ))
+    if [[ "${mem_used_pct}" -ge {{ health_memory_critical_pct }} ]]; then
+        _fail "Uso de memória crítico: ${mem_used_pct}%"
+    elif [[ "${mem_used_pct}" -ge {{ health_memory_warn_pct }} ]]; then
+        _warn "Uso de memória elevado: ${mem_used_pct}%"
+    else
+        _ok "Uso de memória: ${mem_used_pct}%"
+    fi
+fi
+
+# ------------------------------------------------------------------------------
+# 5. Uso de disco
+# ------------------------------------------------------------------------------
+_section "Disco"
+df -h --output=source,fstype,size,used,avail,pcent,target \
+    -x tmpfs -x devtmpfs -x squashfs 2>/dev/null \
+    || df -h -x tmpfs -x devtmpfs
+
+# Alertas para filesystems com uso >= 80%
+while IFS= read -r line; do
+    pct="$(printf '%s' "${line}" | awk '{ print $5 }' | tr -d '%')"
+    mnt="$(printf '%s' "${line}" | awk '{ print $6 }')"
+    if [[ "${pct}" =~ ^[0-9]+$ ]]; then
+        if [[ "${pct}" -ge {{ health_disk_critical_pct }} ]]; then
+            _fail "Disco crítico em ${mnt}: ${pct}% usado"
+        elif [[ "${pct}" -ge {{ health_disk_warn_pct }} ]]; then
+            _warn "Disco elevado em ${mnt}: ${pct}% usado"
+        fi
+    fi
+done < <(df -h -x tmpfs -x devtmpfs --output=source,fstype,used,avail,pcent,target 2>/dev/null \
+         | tail -n +2 || true)
+
+# ------------------------------------------------------------------------------
+# 6. Status de serviços críticos
+# ------------------------------------------------------------------------------
+_section "Serviços Críticos"
+
+_check_service() {
+    local svc="${1}"
+    if ! command -v systemctl &>/dev/null; then
+        _warn "${svc}: systemctl não disponível"
+        return
+    fi
+
+    if ! systemctl list-unit-files --no-legend "${svc}.service" 2>/dev/null | grep -q "${svc}"; then
+        _warn "${svc}: não instalado"
+        return
+    fi
+
+    local state
+    state="$(systemctl is-active "${svc}" 2>/dev/null || true)"
+    case "${state}" in
+        active)
+            _ok "${svc}: ativo (running)"
+            ;;
+        inactive)
+            _warn "${svc}: inativo (stopped)"
+            ;;
+        failed)
+            _fail "${svc}: com falha (failed)"
+            ;;
+        *)
+            _warn "${svc}: estado desconhecido (${state})"
+            ;;
+    esac
+}
+
+_check_service "ssh"
+_check_service "fail2ban"
+_check_service "ufw"
+
+# ------------------------------------------------------------------------------
+# 7. Últimas 5 linhas do auth.log
+# ------------------------------------------------------------------------------
+_section "Últimas entradas em auth.log"
+
+AUTH_LOG=""
+for candidate in /var/log/auth.log /var/log/secure; do
+    if [[ -r "${candidate}" ]]; then
+        AUTH_LOG="${candidate}"
+        break
+    fi
+done
+
+if [[ -n "${AUTH_LOG}" ]]; then
+    printf "  Fonte: %s\n\n" "${AUTH_LOG}"
+    tail -n 5 "${AUTH_LOG}" | while IFS= read -r entry; do
+        printf "  %s\n" "${entry}"
+    done
+elif command -v journalctl &>/dev/null; then
+    printf "  Fonte: journalctl (systemd)\n\n"
+    journalctl -t sshd -n 5 --no-pager -q 2>/dev/null | while IFS= read -r entry; do
+        printf "  %s\n" "${entry}"
+    done
+else
+    _warn "Arquivo auth.log não encontrado e journalctl não disponível"
+fi
+
+# ------------------------------------------------------------------------------
+# Rodapé
+# ------------------------------------------------------------------------------
+printf "\n${C_BOLD}${C_CYAN}══════════════════════════════════════════${C_RESET}\n"
+printf "${C_BOLD}  Verificação concluída em: %s${C_RESET}\n" "$(date '+%Y-%m-%dT%H:%M:%S')"
+printf "${C_BOLD}${C_CYAN}══════════════════════════════════════════${C_RESET}\n\n"

@@ -28,7 +28,7 @@ Unattended-Upgrade::Remove-New-Unused-Dependencies "true";
 Unattended-Upgrade::Automatic-Reboot "{{ auto_reboot | lower }}";
 
 // Horário para reinicialização automática (se habilitada)
-Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+Unattended-Upgrade::Automatic-Reboot-Time "{{ auto_reboot_time }}";
 
 // Endereço de e-mail para notificações (vazio = desabilitado)
 Unattended-Upgrade::Mail "{{ notify_email }}";

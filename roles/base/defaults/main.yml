@@ -27,3 +27,6 @@ ntp_servers:
 ntp_fallback_servers:
   - "2.debian.pool.ntp.org"
   - "3.debian.pool.ntp.org"
+
+# Locale padrão do sistema
+base_locale: en_US.UTF-8
