@@ -4,3 +4,12 @@
 
 # Destino do script de health-check no servidor
 health_script_dest: /usr/local/bin/server-health
+
+# Expressão cron para coleta do sysstat
+sysstat_collection_schedule: "*/10 * * * *"
+
+# Thresholds do script server-health
+health_memory_warn_pct: 75
+health_memory_critical_pct: 90
+health_disk_warn_pct: 80
+health_disk_critical_pct: 90

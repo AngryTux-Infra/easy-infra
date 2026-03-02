@@ -17,9 +17,9 @@
     state: present
     update_cache: true
 
-- name: Gerar locale en_US.UTF-8
+- name: Gerar locale base configurado
   locale_gen:
-    name: en_US.UTF-8
+    name: "{{ base_locale }}"
     state: present
 
 - name: Instalar pacotes essenciais

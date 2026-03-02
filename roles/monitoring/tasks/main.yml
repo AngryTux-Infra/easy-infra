@@ -18,25 +18,25 @@
     line: 'ENABLED="true"'
     state: present
 
-- name: Configurar cron do sysstat — coleta a cada 10 minutos
+- name: Configurar cron do sysstat
   ansible.builtin.copy:
     dest: /etc/cron.d/sysstat
     owner: root
     group: root
     mode: "0644"
     content: |
-      # /etc/cron.d/sysstat — coleta de estatísticas a cada 10 minutos
+      # /etc/cron.d/sysstat — coleta de estatísticas parametrizada
       # Gerenciado pelo easy-infra (Ansible) — NÃO edite manualmente
       PATH=/usr/lib/sysstat:/usr/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 
-      */10 * * * * root command -v debian-sa1 > /dev/null && debian-sa1 1 1
+      {{ sysstat_collection_schedule }} root command -v debian-sa1 > /dev/null && debian-sa1 1 1
 
       # Gera resumo diário às 23:59
       59 23 * * * root command -v debian-sa1 > /dev/null && debian-sa1 60 2
 
 - name: Instalar script de health-check
-  ansible.builtin.copy:
-    src: server-health.sh
+  ansible.builtin.template:
+    src: server-health.sh.j2
     dest: "{{ health_script_dest }}"
     owner: root
     group: root

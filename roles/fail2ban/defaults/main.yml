@@ -15,6 +15,7 @@ f2b_bantime: "{{ access.fail2ban.bantime | default(604800) }}"
 f2b_ignoreip: "{{ access.fail2ban.ignoreip | default('127.0.0.1/8 ::1', true) }}"
 f2b_findtime: "{{ access.fail2ban.findtime | default(600) }}"
 f2b_maxretry: "{{ access.fail2ban.maxretry | default(5) }}"
+f2b_recidive_bantime: "{{ f2b_bantime }}"
 
 # Porta SSH monitorada pelo jail sshd
 ssh_port: "{{ ssh.port | default(2222) }}"
