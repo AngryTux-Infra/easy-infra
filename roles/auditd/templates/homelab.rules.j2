@@ -1,6 +1,6 @@
 # Managed by Ansible (easy-infra) - do not edit manually
-# Regras de auditoria para monitoramento de segurança do servidor
+# Regras de auditoria priorizadas (baseline CIS/STIG)
 
-{% for rule in auditd_rules %}
+{% for rule in auditd_rules if rule | trim %}
 {{ rule }}
 {% endfor %}

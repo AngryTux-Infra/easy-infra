@@ -6,7 +6,33 @@ auditd_enabled: true
 
 # Regras de auditoria
 auditd_rules:
+  # Execução de comandos (CIS/STIG)
+  - "-a always,exit -F arch=b64 -S execve -k exec_monitor"
+  - "-a always,exit -F arch=b32 -S execve -k exec_monitor"
+
+  # Carregamento de módulos de kernel
+  - "-w /usr/sbin/modprobe -p x -k kernel_modules"
+  - "-w /etc/modprobe.conf -p wa -k kernel_modules"
+
+  # Arquivos sensíveis de contas e grupos
+  - "-w /etc/passwd -p wa -k identity"
+  - "-w /etc/group -p wa -k identity"
+  - "-w /etc/shadow -p wa -k identity"
+  - "-w /etc/gshadow -p wa -k identity"
+
+  # Configuração de sudo (mantido específico em /etc)
+  - "-w /etc/sudoers -p wa -k scope"
+  - "-w /etc/sudoers.d -p wa -k scope"
+
+  # Alterações de permissões/propriedade/atributos (CIS/STIG)
+  - "-a always,exit -F arch=b64 -S chmod,fchmod,fchmodat,chown,fchown,fchownat,lchown,setxattr,lsetxattr,fsetxattr -F auid>=1000 -F auid!=unset -k perm_mod"
+  - "-a always,exit -F arch=b32 -S chmod,fchmod,fchmodat,chown,fchown,fchownat,lchown,setxattr,lsetxattr,fsetxattr -F auid>=1000 -F auid!=unset -k perm_mod"
+
+  # Tentativas de acesso negado (CIS/STIG)
+  - "-a always,exit -F arch=b64 -S creat,open,openat,truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset -k access"
+  - "-a always,exit -F arch=b64 -S creat,open,openat,truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset -k access"
+  - "-a always,exit -F arch=b32 -S creat,open,openat,truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset -k access"
+  - "-a always,exit -F arch=b32 -S creat,open,openat,truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset -k access"
+
+  # Logs de autenticação
   - "-w /var/log/auth.log -p wa -k ssh_logins"
-  - "-w /etc/sudoers -p wa -k sudo_commands"
-  - "-w /etc/sudoers.d/ -p wa -k sudo_commands"
-  - "-w /etc/ -p wa -k etc_changes"
