@@ -29,6 +29,6 @@
 - name: Habilitar timer apt-daily-upgrade
   ansible.builtin.systemd:
     name: apt-daily-upgrade.timer
-    enabled: true
-    state: started
+    enabled: "{{ auto_security_updates | bool }}"
+    state: "{{ (auto_security_updates | bool) | ternary('started', 'stopped') }}"
   tags: [updates]

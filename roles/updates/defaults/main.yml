@@ -5,6 +5,9 @@
 # Reinicialização automática após atualizações que exigem reboot
 auto_reboot: false
 
+# Habilitar atualizações automáticas de segurança
+auto_security_updates: true
+
 # E-mail para notificações de atualização automática (vazio = desabilitado)
 notify_email: ""
 
