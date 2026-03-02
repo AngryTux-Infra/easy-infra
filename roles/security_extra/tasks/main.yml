@@ -133,3 +133,148 @@
     - sec_clamav_enabled
     - sec_clamav_daemon
   tags: [security_extra, security, sec, clamav]
+
+- name: Garantir diretório de scripts locais para scans periódicos
+  ansible.builtin.file:
+    path: /usr/local/sbin
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: sec_aide_periodic_enabled or sec_rkhunter_periodic_enabled or sec_clamav_periodic_enabled
+  tags: [security_extra, security, sec, timers]
+
+- name: Instalar script de scan periódico do AIDE
+  ansible.builtin.template:
+    src: aide-check.sh.j2
+    dest: /usr/local/sbin/aide-check.sh
+    owner: root
+    group: root
+    mode: "0750"
+  when: sec_aide_periodic_enabled
+  tags: [security_extra, security, sec, timers, aide]
+
+- name: Instalar script de scan periódico do rkhunter
+  ansible.builtin.template:
+    src: rkhunter-check.sh.j2
+    dest: /usr/local/sbin/rkhunter-check.sh
+    owner: root
+    group: root
+    mode: "0750"
+  when: sec_rkhunter_periodic_enabled
+  tags: [security_extra, security, sec, timers, rkhunter]
+
+- name: Instalar script de scan periódico do ClamAV
+  ansible.builtin.template:
+    src: clamav-scan.sh.j2
+    dest: /usr/local/sbin/clamav-scan.sh
+    owner: root
+    group: root
+    mode: "0750"
+  when:
+    - sec_clamav_enabled
+    - sec_clamav_periodic_enabled
+  tags: [security_extra, security, sec, timers, clamav]
+
+- name: Instalar service unit de scan AIDE
+  ansible.builtin.template:
+    src: aide-check.service.j2
+    dest: /etc/systemd/system/aide-check.service
+    owner: root
+    group: root
+    mode: "0644"
+  when: sec_aide_periodic_enabled
+  tags: [security_extra, security, sec, timers, aide]
+
+- name: Instalar timer unit de scan AIDE
+  ansible.builtin.template:
+    src: aide-check.timer.j2
+    dest: /etc/systemd/system/aide-check.timer
+    owner: root
+    group: root
+    mode: "0644"
+  when: sec_aide_periodic_enabled
+  tags: [security_extra, security, sec, timers, aide]
+
+- name: Instalar service unit de scan rkhunter
+  ansible.builtin.template:
+    src: rkhunter-check.service.j2
+    dest: /etc/systemd/system/rkhunter-check.service
+    owner: root
+    group: root
+    mode: "0644"
+  when: sec_rkhunter_periodic_enabled
+  tags: [security_extra, security, sec, timers, rkhunter]
+
+- name: Instalar timer unit de scan rkhunter
+  ansible.builtin.template:
+    src: rkhunter-check.timer.j2
+    dest: /etc/systemd/system/rkhunter-check.timer
+    owner: root
+    group: root
+    mode: "0644"
+  when: sec_rkhunter_periodic_enabled
+  tags: [security_extra, security, sec, timers, rkhunter]
+
+- name: Instalar service unit de scan ClamAV
+  ansible.builtin.template:
+    src: clamav-scan.service.j2
+    dest: /etc/systemd/system/clamav-scan.service
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - sec_clamav_enabled
+    - sec_clamav_periodic_enabled
+  tags: [security_extra, security, sec, timers, clamav]
+
+- name: Instalar timer unit de scan ClamAV
+  ansible.builtin.template:
+    src: clamav-scan.timer.j2
+    dest: /etc/systemd/system/clamav-scan.timer
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - sec_clamav_enabled
+    - sec_clamav_periodic_enabled
+  tags: [security_extra, security, sec, timers, clamav]
+
+- name: Recarregar daemon systemd para timers de segurança
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when:
+    - not ansible_check_mode
+    - sec_aide_periodic_enabled or sec_rkhunter_periodic_enabled or sec_clamav_periodic_enabled
+  tags: [security_extra, security, sec, timers]
+
+- name: Habilitar timer periódico do AIDE
+  ansible.builtin.systemd:
+    name: aide-check.timer
+    enabled: true
+    state: started
+  when:
+    - not ansible_check_mode
+    - sec_aide_periodic_enabled
+  tags: [security_extra, security, sec, timers, aide]
+
+- name: Habilitar timer periódico do rkhunter
+  ansible.builtin.systemd:
+    name: rkhunter-check.timer
+    enabled: true
+    state: started
+  when:
+    - not ansible_check_mode
+    - sec_rkhunter_periodic_enabled
+  tags: [security_extra, security, sec, timers, rkhunter]
+
+- name: Habilitar timer periódico do ClamAV
+  ansible.builtin.systemd:
+    name: clamav-scan.timer
+    enabled: true
+    state: started
+  when:
+    - not ansible_check_mode
+    - sec_clamav_enabled
+    - sec_clamav_periodic_enabled
+  tags: [security_extra, security, sec, timers, clamav]

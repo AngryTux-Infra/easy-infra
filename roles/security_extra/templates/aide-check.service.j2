@@ -1,0 +1,14 @@
+[Unit]
+Description=Security Extra - AIDE integrity check
+Documentation=man:aide(1)
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/aide-check.sh
+Nice=19
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+[Install]
+WantedBy=multi-user.target

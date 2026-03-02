@@ -23,15 +23,31 @@ security_extra:
   aide:
     enabled: true
     init_if_missing: true
+    periodic_scan:
+      enabled: true
+      on_calendar: "daily"
 
   rkhunter:
     enabled: true
     update_database: false
     propupd: true
+    periodic_scan:
+      enabled: true
+      on_calendar: "daily"
+      update_before_scan: false
 
   clamav:
     enabled: false
     daemon: true
+    periodic_scan:
+      enabled: false
+      on_calendar: "weekly"
+      path: "/"
+      log_file: "/var/log/clamav/security-extra-scan.log"
+
+  timers:
+    randomized_delay_sec: "20m"
+    persistent: true
 
 sec_logrotate_enabled: "{{ security_extra.logrotate.enabled | default(true, true) | bool }}"
 sec_logrotate_easy_infra_logs_enabled: "{{ security_extra.logrotate.easy_infra_logs.enabled | default(true, true) | bool }}"
@@ -50,10 +66,22 @@ sec_apparmor_enforce_profiles: "{{ security_extra.apparmor.enforce_profiles | de
 
 sec_aide_enabled: "{{ security_extra.aide.enabled | default(true, true) | bool }}"
 sec_aide_init_if_missing: "{{ security_extra.aide.init_if_missing | default(true, true) | bool }}"
+sec_aide_periodic_enabled: "{{ security_extra.aide.periodic_scan.enabled | default(true, true) | bool }}"
+sec_aide_periodic_on_calendar: "{{ security_extra.aide.periodic_scan.on_calendar | default('daily', true) }}"
 
 sec_rkhunter_enabled: "{{ security_extra.rkhunter.enabled | default(true, true) | bool }}"
 sec_rkhunter_update_database: "{{ security_extra.rkhunter.update_database | default(false, true) | bool }}"
 sec_rkhunter_propupd: "{{ security_extra.rkhunter.propupd | default(true, true) | bool }}"
+sec_rkhunter_periodic_enabled: "{{ security_extra.rkhunter.periodic_scan.enabled | default(true, true) | bool }}"
+sec_rkhunter_periodic_on_calendar: "{{ security_extra.rkhunter.periodic_scan.on_calendar | default('daily', true) }}"
+sec_rkhunter_periodic_update_before_scan: "{{ security_extra.rkhunter.periodic_scan.update_before_scan | default(false, true) | bool }}"
 
 sec_clamav_enabled: "{{ security_extra.clamav.enabled | default(false, true) | bool }}"
 sec_clamav_daemon: "{{ security_extra.clamav.daemon | default(true, true) | bool }}"
+sec_clamav_periodic_enabled: "{{ security_extra.clamav.periodic_scan.enabled | default(false, true) | bool }}"
+sec_clamav_periodic_on_calendar: "{{ security_extra.clamav.periodic_scan.on_calendar | default('weekly', true) }}"
+sec_clamav_periodic_path: "{{ security_extra.clamav.periodic_scan.path | default('/', true) }}"
+sec_clamav_periodic_log_file: "{{ security_extra.clamav.periodic_scan.log_file | default('/var/log/clamav/security-extra-scan.log', true) }}"
+
+sec_timers_randomized_delay_sec: "{{ security_extra.timers.randomized_delay_sec | default('20m', true) }}"
+sec_timers_persistent: "{{ security_extra.timers.persistent | default(true, true) | bool }}"

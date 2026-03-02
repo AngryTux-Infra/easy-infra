@@ -1,0 +1,15 @@
+[Unit]
+Description=Security Extra - rkhunter scan
+Documentation=man:rkhunter(8)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/rkhunter-check.sh
+Nice=19
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+[Install]
+WantedBy=multi-user.target

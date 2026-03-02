@@ -1,0 +1,15 @@
+[Unit]
+Description=Security Extra - ClamAV scan
+Documentation=man:clamscan(1)
+After=network-online.target clamav-freshclam.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/clamav-scan.sh
+Nice=19
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+[Install]
+WantedBy=multi-user.target
