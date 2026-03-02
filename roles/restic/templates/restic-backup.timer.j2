@@ -1,0 +1,11 @@
+[Unit]
+Description=Run restic backup periodically
+
+[Timer]
+OnCalendar={{ restic_backup_on_calendar }}
+RandomizedDelaySec={{ restic_backup_randomized_delay_sec }}
+Persistent={{ 'true' if restic_backup_persistent | bool else 'false' }}
+Unit={{ restic_backup_service_name }}
+
+[Install]
+WantedBy=timers.target

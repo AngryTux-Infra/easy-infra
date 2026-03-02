@@ -1,0 +1,11 @@
+[Unit]
+Description=Run restic check periodically
+
+[Timer]
+OnCalendar={{ restic_check_on_calendar }}
+RandomizedDelaySec={{ restic_check_randomized_delay_sec }}
+Persistent={{ 'true' if restic_check_persistent | bool else 'false' }}
+Unit={{ restic_check_service_name }}
+
+[Install]
+WantedBy=timers.target

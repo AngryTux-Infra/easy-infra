@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+if [[ ! -f "{{ restic_env_file }}" ]]; then
+  echo "Arquivo de ambiente {{ restic_env_file }} nao encontrado." >&2
+  exit 1
+fi
+
+# shellcheck source=/etc/restic/restic.env
+source "{{ restic_env_file }}"
+
+mkdir -p "{{ restic_log_dir }}"
+
+if ! restic snapshots --last 1 >/dev/null 2>&1; then
+  restic init
+fi
+
+restic backup \
+{% for backup_path in restic_backup_paths %}
+  "{{ backup_path }}" \
+{% endfor %}
+  --exclude-file "{{ restic_excludes_file }}" \
+  --verbose
+
+forget_args=()
+{% if restic_keep_last | int > 0 %}
+forget_args+=(--keep-last {{ restic_keep_last | int }})
+{% endif %}
+{% if restic_keep_hourly | int > 0 %}
+forget_args+=(--keep-hourly {{ restic_keep_hourly | int }})
+{% endif %}
+{% if restic_keep_daily | int > 0 %}
+forget_args+=(--keep-daily {{ restic_keep_daily | int }})
+{% endif %}
+{% if restic_keep_weekly | int > 0 %}
+forget_args+=(--keep-weekly {{ restic_keep_weekly | int }})
+{% endif %}
+{% if restic_keep_monthly | int > 0 %}
+forget_args+=(--keep-monthly {{ restic_keep_monthly | int }})
+{% endif %}
+{% if restic_keep_yearly | int > 0 %}
+forget_args+=(--keep-yearly {{ restic_keep_yearly | int }})
+{% endif %}
+
+if [[ ${#forget_args[@]} -gt 0 ]]; then
+  restic forget --prune "${forget_args[@]}"
+fi

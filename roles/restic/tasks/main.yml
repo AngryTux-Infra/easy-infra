@@ -1,0 +1,169 @@
+---
+# roles/restic/tasks/main.yml — Backup recorrente com retenção e check
+
+- name: Encerrar role se restic estiver desabilitado
+  ansible.builtin.meta: end_role
+  when: not restic_enabled | bool
+
+- name: Validar configuração obrigatória do restic
+  ansible.builtin.assert:
+    that:
+      - restic_repository | length > 0
+      - restic_backup_paths | length > 0
+    fail_msg: "Defina restic_repository e ao menos um item em restic_backup_paths."
+
+- name: Instalar restic
+  ansible.builtin.apt:
+    name: restic
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Criar diretórios de configuração e log
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ restic_config_dir }}", mode: "0750" }
+    - { path: "{{ restic_log_dir }}", mode: "0750" }
+    - { path: "{{ restic_scripts_dir }}", mode: "0755" }
+
+- name: Garantir diretório local do repositório restic quando aplicável
+  ansible.builtin.file:
+    path: "{{ restic_repository }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  when:
+    - restic_repository.startswith('/')
+
+- name: Instalar arquivo de senha quando informado por variável
+  ansible.builtin.copy:
+    dest: "{{ restic_password_file }}"
+    content: "{{ restic_password }}\n"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  when: restic_password | length > 0
+
+- name: Verificar existência do password_file
+  ansible.builtin.stat:
+    path: "{{ restic_password_file }}"
+  register: restic_password_file_stat
+
+- name: Gerar password_file aleatório quando ausente e sem senha definida
+  ansible.builtin.shell: |
+    set -euo pipefail
+    umask 077
+    openssl rand -base64 32 > "{{ restic_password_file }}"
+  args:
+    executable: /bin/bash
+  when:
+    - not restic_password_file_stat.stat.exists
+    - restic_password | length == 0
+
+- name: Revalidar existência do password_file após geração
+  ansible.builtin.stat:
+    path: "{{ restic_password_file }}"
+  register: restic_password_file_stat_after
+
+- name: Falhar quando password_file não existe após tentativa de geração
+  ansible.builtin.fail:
+    msg: >-
+      Arquivo de senha '{{ restic_password_file }}' não encontrado.
+      Defina restic_password via Vault ou provisione o arquivo no host.
+  when: not restic_password_file_stat_after.stat.exists
+
+- name: Configurar arquivo de excludes do restic
+  ansible.builtin.copy:
+    dest: "{{ restic_excludes_file }}"
+    owner: root
+    group: root
+    mode: "0640"
+    content: |
+      # Arquivo gerenciado por Ansible — role restic
+      {% for entry in restic_backup_excludes %}
+      {{ entry }}
+      {% endfor %}
+
+- name: Configurar ambiente do restic
+  ansible.builtin.template:
+    src: restic.env.j2
+    dest: "{{ restic_env_file }}"
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Instalar script de backup restic
+  ansible.builtin.template:
+    src: restic-backup.sh.j2
+    dest: "{{ restic_backup_script }}"
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Instalar script de check restic
+  ansible.builtin.template:
+    src: restic-check.sh.j2
+    dest: "{{ restic_check_script }}"
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Instalar unit de serviço do backup
+  ansible.builtin.template:
+    src: restic-backup.service.j2
+    dest: "/etc/systemd/system/{{ restic_backup_service_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Instalar unit de timer do backup
+  ansible.builtin.template:
+    src: restic-backup.timer.j2
+    dest: "/etc/systemd/system/{{ restic_backup_timer_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Instalar unit de serviço do check
+  ansible.builtin.template:
+    src: restic-check.service.j2
+    dest: "/etc/systemd/system/{{ restic_check_service_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Instalar unit de timer do check
+  ansible.builtin.template:
+    src: restic-check.timer.j2
+    dest: "/etc/systemd/system/{{ restic_check_timer_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Aplicar handlers pendentes antes de habilitar timers
+  ansible.builtin.meta: flush_handlers
+
+- name: Habilitar e iniciar timer de backup
+  ansible.builtin.systemd:
+    name: "{{ restic_backup_timer_name }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Habilitar timer de check
+  ansible.builtin.systemd:
+    name: "{{ restic_check_timer_name }}"
+    enabled: true
+    state: "{{ 'started' if restic_check_enabled | bool else 'stopped' }}"
+    daemon_reload: true

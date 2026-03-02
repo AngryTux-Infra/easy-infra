@@ -1,0 +1,14 @@
+[Unit]
+Description=Restic repository integrity check
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile={{ restic_env_file }}
+ExecStart={{ restic_check_script }}
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+StandardOutput=append:{{ restic_log_dir }}/check.log
+StandardError=append:{{ restic_log_dir }}/check.log
