@@ -1,0 +1,14 @@
+---
+extends: default
+
+ignore: |
+  .git/
+  .molecule/
+  artifacts/
+
+rules:
+  document-start: disable
+  line-length:
+    max: 180
+    allow-non-breakable-words: true
+  truthy: disable

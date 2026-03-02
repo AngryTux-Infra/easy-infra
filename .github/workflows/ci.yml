@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint-test-molecule-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install "ansible-core>=2.17,<2.19" "ansible-lint>=24,<25" "yamllint>=1.35,<2" "pytest>=8,<9" "molecule[docker]>=24,<25" "docker>=7,<8"
+
+      - name: Install pinned collections
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: YAML lint
+        run: yamllint -s .
+
+      - name: Ansible lint
+        run: ansible-lint
+
+      - name: Unit tests
+        run: pytest -q
+
+      - name: Build Molecule integration image
+        run: docker build -t easy-infra/debian13-integration:latest -f tests/integration/Dockerfile tests/integration
+
+      - name: Molecule core scenarios
+        run: make molecule-test-core
