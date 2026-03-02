@@ -1,0 +1,6 @@
+---
+- name: Converge scenario base
+  hosts: all
+  become: true
+  roles:
+    - role: base

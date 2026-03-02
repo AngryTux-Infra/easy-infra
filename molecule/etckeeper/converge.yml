@@ -1,0 +1,6 @@
+---
+- name: Converge scenario etckeeper
+  hosts: all
+  become: true
+  roles:
+    - role: etckeeper

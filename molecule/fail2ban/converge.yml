@@ -1,0 +1,6 @@
+---
+- name: Converge scenario fail2ban
+  hosts: all
+  become: true
+  roles:
+    - role: fail2ban
